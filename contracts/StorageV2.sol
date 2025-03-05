@@ -11,7 +11,7 @@ import {INeuStorage} from "./interfaces/INeuStorage.sol";
 import {Neu} from "./Neu.sol";
 import {NeuEntitlement} from "./Entitlement.sol";
 
-contract NeuStorage is
+contract NeuStorageV2 is
     Initializable,
     AccessControlUpgradeable,
     UUPSUpgradeable,

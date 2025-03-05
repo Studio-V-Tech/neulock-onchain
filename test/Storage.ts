@@ -43,16 +43,23 @@ describe("Storage", function () {
       expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
     });
 
-    it("Reverts on saving data if NEU does not exist", async function () {
+    it("Reverts on saving data if caller does not have entitlement", async function () {
       const { callStorageAs, user } = await loadFixture(deployContractsFixture);
 
-      await expect(callStorageAs(user).saveData(42n, userDataBytesArray[0])).to.be.reverted;
+      await expect(callStorageAs(user).saveData(0n, userDataBytesArray[0])).to.be.revertedWith("Caller does not have entitlement");
     });
 
-    it("Reverts on saving data if caller does not own NEU", async function () {
+    it("Updates data if caller does not own called NEU but has entitlement", async function () {
       const { callStorageAs, user } = await loadFixture(purchasedTokensFixture);
 
-      await expect(callStorageAs(user).saveData(2n, userDataBytesArray[0])).to.be.revertedWith("Caller does not own NEU token");
+      await expect(callStorageAs(user).saveData(2n, userDataBytesArray[0])).not.to.be.reverted;
+      expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[0]);
+    });
+
+    it("Reverts on saving data if caller does not own called NEU and does not have entitlement", async function () {
+      const { callStorageAs, upgrader } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callStorageAs(upgrader).saveData(100001n, userDataBytesArray[0])).to.be.revertedWith("Caller does not have entitlement");
     });
 
     it("Reverts on saving data if value exists and is not enough", async function () {

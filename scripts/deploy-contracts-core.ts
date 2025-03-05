@@ -16,7 +16,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
 
   const Neu = await ethers.getContractFactory(isTest ? "NeuHarness" : "Neu");
   const Metadata = await ethers.getContractFactory("NeuMetadata");
-  const Storage = await ethers.getContractFactory("NeuStorage");
+  const Storage = await ethers.getContractFactory("NeuStorageV2");
   const Logo = await ethers.getContractFactory("NeuLogo");
   const Entitlement = await ethers.getContractFactory("NeuEntitlement");
 
@@ -56,6 +56,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
     adminAddress,
     upgraderAddress,
     neuAddress,
+    entitlementAddress,
   ]);
 
   await storage.waitForDeployment();
