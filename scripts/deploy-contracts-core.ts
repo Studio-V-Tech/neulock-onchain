@@ -6,7 +6,7 @@ import { Account, ChainType, ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
 
 async function deployContracts({ isTest } : { isTest?: boolean } = {}
-): Promise<[BaseContract, BaseContract, BaseContract, BaseContract]> {
+): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
 
@@ -18,6 +18,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   const Metadata = await ethers.getContractFactory("NeuMetadata");
   const Storage = await ethers.getContractFactory("NeuStorage");
   const Logo = await ethers.getContractFactory("NeuLogo");
+  const Entitlement = await ethers.getContractFactory("NeuEntitlement");
 
   let operatorSigner = chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
 
@@ -26,7 +27,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   const logo = await Logo.deploy();
   await logo.waitForDeployment();
   const logoAddress = await logo.getAddress();
-  console.log(`Neulock Logo deployed at:     ${logoAddress}`);
+  console.log(`Neulock Logo deployed at:        ${logoAddress}`);
 
   const neu = await upgrades.deployProxy(Neu, [
     adminAddress,
@@ -37,7 +38,19 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   await neu.waitForDeployment();
 
   const neuAddress = await neu.getAddress();
-  console.log(`NEU token deployed at:        ${neuAddress}`);
+  console.log(`NEU token deployed at:           ${neuAddress}`);
+
+  const entitlement = await upgrades.deployProxy(Entitlement, [
+    adminAddress,
+    upgraderAddress,
+    operatorAddress,
+    neuAddress,
+  ]);
+
+  await entitlement.waitForDeployment();
+
+  const entitlementAddress = await entitlement.getAddress();
+  console.log(`Neulock Entitlement deployed at: ${entitlementAddress}`);
 
   const storage = await upgrades.deployProxy(Storage, [
     adminAddress,
@@ -48,7 +61,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   await storage.waitForDeployment();
 
   const storageAddress = await storage.getAddress();
-  console.log(`Neulock Storage deployed at:  ${storageAddress}`);
+  console.log(`Neulock Storage deployed at:     ${storageAddress}`);
 
   const metadata = await upgrades.deployProxy(Metadata, [
     adminAddress,
@@ -61,7 +74,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   await metadata.waitForDeployment();
 
   const metadataAddress = await metadata.getAddress();
-  console.log(`Neulock Metadata deployed at: ${metadataAddress}`);
+  console.log(`Neulock Metadata deployed at:    ${metadataAddress}`);
 
   console.log('---');
 
@@ -87,6 +100,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
     storage,
     metadata,
     logo,
+    entitlement,
   ];
 }
 

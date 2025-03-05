@@ -14,6 +14,8 @@ export enum Contract {
   neu = 'Neu',
   storage = 'NeuStorage',
   metadata = 'NeuMetadata',
+  logo = 'NeuLogo',
+  entitlement = 'NeuEntitlement',
 }
 
 export enum ChainType {
@@ -33,46 +35,64 @@ export const ChainContractAddress = {
     [Contract.neu]: '0x0',
     [Contract.storage]: '0x0',
     [Contract.metadata]: '0x0',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.sepolia]: {
     [Contract.neu]: '0x51b063969a9b3E2C8e462BB0De6b7E742dd0d09F',
     [Contract.storage]: '0xb023cF91D6015b13f785ABf7dF9Fd4e4Ff9FFFfF',
     [Contract.metadata]: '0xb115C53A1ed35892a94ef126C81438404145e401',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.optimism]: {
     [Contract.neu]: '0x8D086dd57475D4490190fB15a19aAEc8167F89dD',
     [Contract.storage]: '0xA7536b808f0937EEB42393a73095Fbf044A8e5aD',
     [Contract.metadata]: '0x652bE7a9742b2cE265854133B5fA3b8E1fDD2510',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.optimismSepolia]: {
     [Contract.neu]: '0xf214d301656fE8d8B1C20405D80EBA88B1E464da',
     [Contract.storage]: '0x68CB233b12AC5026f45FE741d0a32382c4B86794',
     [Contract.metadata]: '0xb380c79BFfeeCEA9693d94837d18993EF82c0489',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.arbitrumOne]: {
     [Contract.neu]: '0xf06A890a2Fdb0d21413FDc3488B7298552A9C0C9',
     [Contract.storage]: '0xDcD7e74F4716990C4013fd50bEe1FbC54ccd2De0',
     [Contract.metadata]: '0x5F37549475D42b158D354294e13422b1e8a43f01',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.arbitrumSepolia]: {
     [Contract.neu]: '0xf214d301656fE8d8B1C20405D80EBA88B1E464da',
     [Contract.storage]: '0x68CB233b12AC5026f45FE741d0a32382c4B86794',
     [Contract.metadata]: '0xb380c79BFfeeCEA9693d94837d18993EF82c0489',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.base]: {
     [Contract.neu]: '0xd0E66B652213fcbdCE609142B33498b7dcf05B50',
     [Contract.storage]: '0x4D2a96E1421Dec3c9f0E083e7d805cB77124dFC1',
     [Contract.metadata]: '0x10d1767aB87e600c6a4085E65e1F078aeE94f7aD',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.baseSepolia]: {
     [Contract.neu]: '0xf214d301656fE8d8B1C20405D80EBA88B1E464da',
     [Contract.storage]: '0x68CB233b12AC5026f45FE741d0a32382c4B86794',
     [Contract.metadata]: '0xb380c79BFfeeCEA9693d94837d18993EF82c0489',
+    [Contract.logo]: '0x0',
+    [Contract.entitlement]: '0x0',
   },
   [Chain.hardhat]: {
     [Contract.neu]: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
-    [Contract.storage]: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
-    [Contract.metadata]: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+    [Contract.storage]: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+    [Contract.metadata]: '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6',
+    [Contract.logo]: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    [Contract.entitlement]: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
   },
 };
 
