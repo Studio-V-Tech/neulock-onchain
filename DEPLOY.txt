@@ -1,0 +1,35 @@
+npx hardhat run scripts/deploy-contracts.ts --network optimism
+
+vim scripts/lib/config.ts // Update contract addresses
+
+npx hardhat verify --network optimism 0x8D086dd57475D4490190fB15a19aAEc8167F89dD
+npx hardhat verify --network optimism 0xA7536b808f0937EEB42393a73095Fbf044A8e5aD
+npx hardhat verify --network optimism 0x652bE7a9742b2cE265854133B5fA3b8E1fDD2510
+
+STEP=1 npx hardhat run scripts/deploy-contracts-tx.ts --network optimism
+echo 0x /NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
+STEP=2 npx hardhat run scripts/deploy-contracts-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
+STEP=3 npx hardhat run scripts/deploy-contracts-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
+SERIES=0 npx hardhat run scripts/add-series-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
+SERIES=1 npx hardhat run scripts/add-series-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
+TO=0x98b78C6887350c7b71ff425Ab6a276e8eE478Fc4 SERIES=0 COUNT=6 npx hardhat run scripts/mint-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
+TO=0x98b78C6887350c7b71ff425Ab6a276e8eE478Fc4 SERIES=1 COUNT=13 npx hardhat run scripts/mint-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism

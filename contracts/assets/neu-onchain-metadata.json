@@ -1,0 +1,11 @@
+{
+  "traits": {
+    "points": {
+      "displayName": "Sponsor Points",
+      "dataType": {
+        "type": "decimal"
+      },
+      "validateOnSale": "requireUintGte"
+    }
+  }
+}
