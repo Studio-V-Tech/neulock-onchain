@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: CC0-1.0
+pragma solidity ^0.8.27;
 
 interface INeuStorage {
     function saveData(uint256 tokenId, bytes memory data) external payable;

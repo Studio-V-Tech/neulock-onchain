@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: CC0-1.0
+pragma solidity ^0.8.27;
 
 interface INeu {
   function safeMint ( address to, uint16 seriesIndex ) external;
