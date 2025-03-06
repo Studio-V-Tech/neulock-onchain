@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
-import "hardhat/console.sol";
 
 import {INeuEntitlement} from "./interfaces/IEntitlement.sol";
 
@@ -69,10 +68,10 @@ contract NeuEntitlement is
     function hasEntitlement(address user) external view override returns (bool) {
         for (uint256 i = 0; i < entitlementContracts.length; i++) {
             IERC721 entitlementContract = IERC721(entitlementContracts[i]);
-            console.log("Balance: %s", entitlementContract.balanceOf(user));
-              if (entitlementContract.balanceOf(user) > 0) {
-                  return true;
-              }
+
+            if (entitlementContract.balanceOf(user) > 0) {
+                return true;
+            }
         }
 
         return false;
