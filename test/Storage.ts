@@ -1,8 +1,9 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 
-import { getRoles, userDataBytesArray, userDataHexArray } from "../scripts/lib/utils";
+import { userDataBytesArray, userDataHexArray } from "../scripts/lib/utils";
 import { deployContractsFixture, purchasedTokensFixture, setUserDataFixture } from "./lib/fixtures";
+import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
 describe("Storage", function () {
   describe("Deployment", function () {
@@ -69,78 +70,5 @@ describe("Storage", function () {
     });
   });
 
-  describe("Access control", function () {
-    it("Sets default roles correctly", async function () {
-      const { callStorageAs, admin, upgrader, operator, user } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole } = getRoles();
-
-      expect(await callStorageAs(user).hasRole(adminRole, admin.address as `0x${string}`)).to.be.true;
-      expect(await callStorageAs(user).hasRole(upgraderRole, upgrader.address as `0x${string}`)).to.be.true;
-      expect(await callStorageAs(user).hasRole(adminRole, user.address as `0x${string}`)).to.be.false;
-      expect(await callStorageAs(user).hasRole(adminRole, upgrader.address as `0x${string}`)).to.be.false;
-      expect(await callStorageAs(user).hasRole(adminRole, operator.address as `0x${string}`)).to.be.false;
-      expect(await callStorageAs(user).hasRole(upgraderRole, admin.address as `0x${string}`)).to.be.false;
-    });
-
-    it("Sets role admins correctly", async function () {
-      const { callStorageAs, user } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole } = getRoles();
-
-      expect(await callStorageAs(user).getRoleAdmin(adminRole)).to.equal(adminRole);
-      expect(await callStorageAs(user).getRoleAdmin(upgraderRole)).to.equal(adminRole);
-    });
-
-    it("Grants roles correctly", async function () {
-      const { callStorageAs, admin, user, user2 } = await loadFixture(deployContractsFixture);
-      const { upgraderRole } = getRoles();
-
-      await (await callStorageAs(admin).grantRole(upgraderRole, user.address as `0x${string}`)).wait();
-
-      expect(await callStorageAs(user).hasRole(upgraderRole, user.address as `0x${string}`)).to.be.true;
-    });
-
-    it("Revokes roles correctly", async function () {
-      const { callStorageAs, admin, upgrader, operator, user } = await loadFixture(deployContractsFixture);
-      const { upgraderRole } = getRoles();
-
-      await (await callStorageAs(admin).revokeRole(upgraderRole, upgrader.address as `0x${string}`)).wait();
-
-      expect(await callStorageAs(user).hasRole(upgraderRole, upgrader.address as `0x${string}`)).to.be.false;
-    });
-
-    it("Sets admin role correctly", async function () {
-      const { callStorageAs, admin, user, user2 } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole } = getRoles();
-
-      await (await callStorageAs(admin).grantRole(adminRole, user.address as `0x${string}`)).wait();
-      await (await callStorageAs(admin).revokeRole(adminRole, admin.address as `0x${string}`)).wait();
-      await (await callStorageAs(user).grantRole(adminRole, user2.address as `0x${string}`)).wait();
-
-      expect(await callStorageAs(user).hasRole(adminRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callStorageAs(user2).hasRole(adminRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callStorageAs(user).hasRole(adminRole, admin.address as `0x${string}`)).to.be.false;
-      await expect(callStorageAs(admin).grantRole(upgraderRole, user2.address as `0x${string}`)).to.be.reverted;
-    });
-
-    it("Obeys new roles in function calls", async function () {
-      const { callStorageAs, admin, user, user2 } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole } = getRoles();
-
-      await (await callStorageAs(admin).grantRole(adminRole, user.address as `0x${string}`)).wait();
-      await (await callStorageAs(admin).revokeRole(adminRole, admin.address as `0x${string}`)).wait();
-
-      await expect(callStorageAs(admin).grantRole(upgraderRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callStorageAs(user).grantRole(upgraderRole, user2.address as `0x${string}`)).not.to.be.reverted;
-    });
-
-    it("Reverts on setting roles for non-admin", async function () {
-      const { user, user2, callStorageAs, upgrader } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole } = getRoles();
-
-      await expect(callStorageAs(user).grantRole(adminRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callStorageAs(user).grantRole(upgraderRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callStorageAs(upgrader).grantRole(adminRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callStorageAs(upgrader).grantRole(upgraderRole, upgrader.address as `0x${string}`)).to.be.reverted;
-    });
-  });
+  describe("Access control", accessControlTestFactory(AccessControlSupportedContracts.Storage));
 });

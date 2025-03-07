@@ -3,6 +3,7 @@ import { expect } from "chai";
 
 import { TokenMetadata, stringToBytes, bytesToString, getRoles, validateTokenMetadataCommonAttributes, validateSvg } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture } from "./lib/fixtures";
+import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
 describe("Metadata", function () {
   describe("Deployment", function () {
@@ -232,52 +233,8 @@ describe("Metadata", function () {
     });
   });
 
-  describe("Access control", function () {
-    it("Sets default roles correctly", async function () {
-      const { callMetadataAs, admin, upgrader, operator, user } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole, operatorRole } = getRoles();
-
-      expect(await callMetadataAs(user).hasRole(adminRole, admin.address as `0x${string}`)).to.be.true;
-      expect(await callMetadataAs(user).hasRole(upgraderRole, upgrader.address as `0x${string}`)).to.be.true;
-      expect(await callMetadataAs(user).hasRole(operatorRole, operator.address as `0x${string}`)).to.be.true;
-      expect(await callMetadataAs(user).hasRole(adminRole, user.address as `0x${string}`)).to.be.false;
-      expect(await callMetadataAs(user).hasRole(adminRole, upgrader.address as `0x${string}`)).to.be.false;
-      expect(await callMetadataAs(user).hasRole(adminRole, operator.address as `0x${string}`)).to.be.false;
-      expect(await callMetadataAs(user).hasRole(upgraderRole, admin.address as `0x${string}`)).to.be.false;
-    });
-
-    it("Sets role admins correctly", async function () {
-      const { callMetadataAs, user } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole, operatorRole } = getRoles();
-
-      expect(await callMetadataAs(user).getRoleAdmin(adminRole)).to.equal(adminRole);
-      expect(await callMetadataAs(user).getRoleAdmin(upgraderRole)).to.equal(adminRole);
-      expect(await callMetadataAs(user).getRoleAdmin(operatorRole)).to.equal(adminRole);
-    });
-
-    it("Grants roles correctly", async function () {
-      const { callMetadataAs, admin, user, user2 } = await loadFixture(deployContractsFixture);
-      const { upgraderRole, operatorRole } = getRoles();
-
-      await (await callMetadataAs(admin).grantRole(upgraderRole, user.address as `0x${string}`)).wait();
-      await (await callMetadataAs(admin).grantRole(operatorRole, user2.address as `0x${string}`)).wait();
-
-      expect(await callMetadataAs(user).hasRole(upgraderRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callMetadataAs(user2).hasRole(operatorRole, user2.address as `0x${string}`)).to.be.true;
-    });
-
-    it("Revokes roles correctly", async function () {
-      const { callMetadataAs, admin, upgrader, operator, user } = await loadFixture(deployContractsFixture);
-      const { upgraderRole, operatorRole } = getRoles();
-
-      await (await callMetadataAs(admin).revokeRole(upgraderRole, upgrader.address as `0x${string}`)).wait();
-      await (await callMetadataAs(admin).revokeRole(operatorRole, operator.address as `0x${string}`)).wait();
-
-      expect(await callMetadataAs(user).hasRole(upgraderRole, upgrader.address as `0x${string}`)).to.be.false;
-      expect(await callMetadataAs(user).hasRole(operatorRole, operator.address as `0x${string}`)).to.be.false;
-    });
-
-    it("Obeys new roles in function calls", async function () {
+  describe("Access control specifics", function () {
+    it("Obeys new roles in set availability calls", async function () {
       const { callMetadataAs, admin, operator, user, wagmiId } = await loadFixture(setSeriesFixture);
       const { operatorRole } = getRoles();
 
@@ -287,28 +244,7 @@ describe("Metadata", function () {
       await expect(callMetadataAs(operator).setSeriesAvailability(wagmiId, false)).to.be.reverted;
       await expect(callMetadataAs(user).setSeriesAvailability(wagmiId, false)).not.to.be.reverted;
     });
-    it("Sets admin role correctly", async function () {
-      const { callMetadataAs, admin, user, user2 } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole } = getRoles();
-
-      await (await callMetadataAs(admin).grantRole(adminRole, user.address as `0x${string}`)).wait();
-      await (await callMetadataAs(admin).revokeRole(adminRole, admin.address as `0x${string}`)).wait();
-      await (await callMetadataAs(user).grantRole(adminRole, user2.address as `0x${string}`)).wait();
-
-      expect(await callMetadataAs(user).hasRole(adminRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callMetadataAs(user2).hasRole(adminRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callMetadataAs(user).hasRole(adminRole, admin.address as `0x${string}`)).to.be.false;
-      await expect(callMetadataAs(admin).grantRole(upgraderRole, user2.address as `0x${string}`)).to.be.reverted;
-    });
-
-    it("Reverts on setting roles for non-admin", async function () {
-      const { user, user2, callMetadataAs, operator } = await loadFixture(deployContractsFixture);
-      const { upgraderRole, operatorRole } = getRoles();
-
-      await expect(callMetadataAs(user).grantRole(upgraderRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callMetadataAs(operator).grantRole(operatorRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callMetadataAs(operator).grantRole(upgraderRole, operator.address as `0x${string}`)).to.be.reverted;
-    });
   });
 
+  describe("Access control", accessControlTestFactory(AccessControlSupportedContracts.Metadata));
 });

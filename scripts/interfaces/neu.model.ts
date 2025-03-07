@@ -1,14 +1,12 @@
 import { BaseContract, ContractTransactionResponse } from "ethers";
 
-interface NeuBaseContract extends BaseContract {
+import AccessControl from "./lib/access-control.model";
+
+interface NeuBaseContract extends BaseContract, AccessControl {
   ownerOf(token: bigint): Promise<`0x${string}`>;
   totalSupply(): Promise<bigint>;
   balanceOf(account: `0x${string}`): Promise<bigint>;
   safeMint(to: string, seriesIndex: bigint): Promise<ContractTransactionResponse>;
-  hasRole(role: `0x${string}`, account: `0x${string}`): Promise<boolean>;
-  grantRole(role: `0x${string}`, account: `0x${string}`): Promise<ContractTransactionResponse>;
-  revokeRole(role: `0x${string}`, account: `0x${string}`): Promise<ContractTransactionResponse>;
-  getRoleAdmin(role: `0x${string}`): Promise<`0x${string}`>;
   safeMintPublic(seriesIndex: bigint, options: { value: bigint }): Promise<ContractTransactionResponse>;
   setSeriesAvailability(seriesIndex: bigint, available: boolean): Promise<ContractTransactionResponse>;
   addSeries(name: Uint8Array, priceInGwei: bigint, firstToken: bigint, maxTokens: bigint, fgColorRGB565: bigint, bgColorRGB565: bigint, makeAvailable: boolean): Promise<ContractTransactionResponse >;

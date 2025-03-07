@@ -1,7 +1,8 @@
 import { BaseContract, ContractTransactionResponse } from "ethers";
 
-interface MetadataBaseContract extends BaseContract {
-  // Metadata
+import AccessControl from "./lib/access-control.model";
+
+interface MetadataBaseContract extends BaseContract, AccessControl {
   addSeries(name: Uint8Array, priceInGwei: bigint, firstToken: bigint, maxTokens: bigint, fgColorRGB565: bigint, bgColorRGB565: bigint, accentColorRGB565: bigint, makeAvailable: boolean): Promise<ContractTransactionResponse >;
   createTokenMetadata(seriesIndex: bigint, originalPrice: bigint): Promise<{ tokenId: bigint, governance: boolean }>;
   deleteTokenMetadata(tokenId: bigint): Promise<ContractTransactionResponse>;
@@ -19,11 +20,6 @@ interface MetadataBaseContract extends BaseContract {
   setTraitMetadataURI(uri: string): Promise<ContractTransactionResponse>;
   sumAllRefundableTokensValue(): Promise<bigint>;
   tokenURI(tokenId: bigint): Promise<string>;
-  // AccessControl
-  hasRole(role: `0x${string}`, account: `0x${string}`): Promise<boolean>;
-  grantRole(role: `0x${string}`, account: `0x${string}`): Promise<ContractTransactionResponse>;
-  revokeRole(role: `0x${string}`, account: `0x${string}`): Promise<ContractTransactionResponse>;
-  getRoleAdmin(role: `0x${string}`): Promise<`0x${string}`>;
 }
 
 export default MetadataBaseContract;

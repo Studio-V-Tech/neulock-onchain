@@ -1,8 +1,9 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 
-import { day, userDataBytesArray } from "../scripts/lib/utils";
+import { day, getRoles, userDataBytesArray } from "../scripts/lib/utils";
 import { deployContractsFixture, entitlementFixture, unlockFixture } from "./lib/fixtures";
+import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
 describe("Entitlement", function () {
   describe("Deployment", function () {
@@ -11,7 +12,9 @@ describe("Entitlement", function () {
 
       expect(await entitlement.getAddress()).to.be.properAddress;
     });
+  });
 
+  describe("Contract management", function () {
     it("Has NEU entitlement contract after deployment", async function () {
       const { operator, callEntitlementAs, neu } = await loadFixture(deployContractsFixture);
 
@@ -75,7 +78,9 @@ describe("Entitlement", function () {
       expect(firstContract).to.equal(neuAddress);
       await expect(callEntitlementAs(operator).entitlementContracts(1n)).to.be.reverted;
     });
+  });
 
+  describe("Entitlement permissions", function () {
     it("Reverts upon removing non-existent entitlement contract", async function () {
       const { operator, callEntitlementAs } = await loadFixture(entitlementFixture);
 
@@ -117,6 +122,35 @@ describe("Entitlement", function () {
       await time.increase(day * 31);
       await expect(callStorageAs(user3).saveData(0n, userDataBytesArray[3])).to.be.revertedWith("Caller does not have entitlement");
     });
-
   });
+
+  describe("Access control specifics", function () {
+    it("Obeys new roles in add contract calls", async function () {
+      const { admin, operator, user, callEntitlementAs, lock } = await loadFixture(unlockFixture);
+
+      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const { operatorRole } = getRoles();
+
+      await (await callEntitlementAs(admin).grantRole(operatorRole, user.address as `0x${string}`)).wait();
+      await (await callEntitlementAs(admin).revokeRole(operatorRole, operator.address as `0x${string}`)).wait();
+
+      await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).to.be.reverted;
+      await expect(callEntitlementAs(user).addEntitlementContract(lockAddress)).not.to.be.reverted;
+    });
+
+    it("Obeys new roles in remove contract calls", async function () {
+      const { admin, operator, user, callEntitlementAs, lock } = await loadFixture(entitlementFixture);
+
+      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const { operatorRole } = getRoles();
+
+      await (await callEntitlementAs(admin).grantRole(operatorRole, user.address as `0x${string}`)).wait();
+      await (await callEntitlementAs(admin).revokeRole(operatorRole, operator.address as `0x${string}`)).wait();
+
+      await expect(callEntitlementAs(operator).removeEntitlementContract(lockAddress)).to.be.reverted;
+      await expect(callEntitlementAs(user).removeEntitlementContract(lockAddress)).not.to.be.reverted;
+    });
+  });
+
+  describe("Access control", accessControlTestFactory(AccessControlSupportedContracts.Entitlement));
 });

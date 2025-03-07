@@ -7,6 +7,7 @@ import { ethers } from "hardhat";
 
 import { TokenMetadata, day, stringToBytes, seriesValue, getRoles, validateTokenMetadataCommonAttributes, parseSponsorPointsResponse, pointsTrait } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture, setUserDataFixture } from "./lib/fixtures";
+import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
 describe("Neu", function () {
   describe("Deployment", function () {
@@ -51,7 +52,7 @@ describe("Neu", function () {
 
     it("Reverts on minting from sold-out series", async function () {
       const { operator, user, callNeuAs, uniqueId } = await loadFixture(setSeriesFixture);
-      
+
       await expect(callNeuAs(user).safeMintPublic(uniqueId, { value: 10n ** 9n })).not.to.be.reverted;
       await expect(callNeuAs(user).safeMintPublic(uniqueId, { value: 10n ** 9n })).to.be.revertedWith(
         "Public minting not available");
@@ -235,7 +236,7 @@ describe("Neu", function () {
     });
 
     it("Withdraws only non-refunded tokens", async function () {
-      const { operator,user3, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
+      const { operator, user3, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
 
       await (await callNeuAs(user3).refund(3n)).wait();
       await (await callNeuAs(user3).refund(100003n)).wait();
@@ -488,7 +489,7 @@ describe("Neu", function () {
     it("Gets multiple dynamic traits correctly for multiple tokens", async function () {
       const { user, callNeuAs } = await loadFixture(setUserDataFixture);
 
-      const [ ogTokenTraitBytes, wagmiTokenTraitBytes ] = await callNeuAs(user).getTokensTraitValues([3n, 100003n], [pointsTrait]);
+      const [ogTokenTraitBytes, wagmiTokenTraitBytes] = await callNeuAs(user).getTokensTraitValues([3n, 100003n], [pointsTrait]);
 
       const ogTokenTrait = ogTokenTraitBytes.map((trait) => parseSponsorPointsResponse(trait));
       const wagmiTokenTrait = wagmiTokenTraitBytes.map((trait) => parseSponsorPointsResponse(trait));
@@ -499,7 +500,7 @@ describe("Neu", function () {
       expect(wagmiTokenTrait).to.be.an("array").with.lengthOf(1);
       expect(wagmiTokenTrait[0]).to.equal(0);
     });
- 
+
     it("Reverts on trying to set dynamic trait", async function () {
       const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
 
@@ -581,59 +582,15 @@ describe("Neu", function () {
     it("Gets proper royalty info", async function () {
       const { neu, user, callNeuAs } = await loadFixture(purchasedTokensFixture);
 
-      const [ recipient, value ] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
+      const [recipient, value] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
 
       expect(recipient).to.equal(await neu.getAddress());
       expect(value).to.equal(10n ** 8n);
     });
   });
 
-  describe("Access control", function () {
-    it("Sets default roles correctly", async function () {
-      const { callNeuAs, admin, upgrader, operator, user } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole, operatorRole } = getRoles();
-
-      expect(await callNeuAs(user).hasRole(adminRole, admin.address as `0x${string}`)).to.be.true;
-      expect(await callNeuAs(user).hasRole(upgraderRole, upgrader.address as `0x${string}`)).to.be.true;
-      expect(await callNeuAs(user).hasRole(operatorRole, operator.address as `0x${string}`)).to.be.true;
-      expect(await callNeuAs(user).hasRole(adminRole, user.address as `0x${string}`)).to.be.false;
-      expect(await callNeuAs(user).hasRole(adminRole, upgrader.address as `0x${string}`)).to.be.false;
-      expect(await callNeuAs(user).hasRole(adminRole, operator.address as `0x${string}`)).to.be.false;
-      expect(await callNeuAs(user).hasRole(upgraderRole, admin.address as `0x${string}`)).to.be.false;
-    });
-
-    it("Sets role admins correctly", async function () {
-      const { callNeuAs, user } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole, operatorRole } = getRoles();
-
-      expect(await callNeuAs(user).getRoleAdmin(adminRole)).to.equal(adminRole);
-      expect(await callNeuAs(user).getRoleAdmin(upgraderRole)).to.equal(adminRole);
-      expect(await callNeuAs(user).getRoleAdmin(operatorRole)).to.equal(adminRole);
-    });
-
-    it("Grants roles correctly", async function () {
-      const { callNeuAs, admin, user, user2 } = await loadFixture(deployContractsFixture);
-      const { upgraderRole, operatorRole } = getRoles();
-
-      await (await callNeuAs(admin).grantRole(upgraderRole, user.address as `0x${string}`)).wait();
-      await (await callNeuAs(admin).grantRole(operatorRole, user2.address as `0x${string}`)).wait();
-
-      expect(await callNeuAs(user).hasRole(upgraderRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callNeuAs(user2).hasRole(operatorRole, user2.address as `0x${string}`)).to.be.true;
-    });
-
-    it("Revokes roles correctly", async function () {
-      const { callNeuAs, admin, upgrader, operator, user } = await loadFixture(deployContractsFixture);
-      const { upgraderRole, operatorRole } = getRoles();
-
-      await (await callNeuAs(admin).revokeRole(upgraderRole, upgrader.address as `0x${string}`)).wait();
-      await (await callNeuAs(admin).revokeRole(operatorRole, operator.address as `0x${string}`)).wait();
-
-      expect(await callNeuAs(user).hasRole(upgraderRole, upgrader.address as `0x${string}`)).to.be.false;
-      expect(await callNeuAs(user).hasRole(operatorRole, operator.address as `0x${string}`)).to.be.false;
-    });
-
-    it("Obeys new roles in function calls", async function () {
+  describe("Access control specifics", function () {
+    it("Obeys new roles in withdrawal calls", async function () {
       const { callNeuAs, admin, operator, user } = await loadFixture(deployContractsFixture);
       const { operatorRole } = getRoles();
 
@@ -643,27 +600,7 @@ describe("Neu", function () {
       await expect(callNeuAs(operator).withdraw()).to.be.reverted;
       await expect(callNeuAs(user).withdraw()).not.to.be.reverted;
     });
-    it("Sets admin role correctly", async function () {
-      const { callNeuAs, admin, user, user2 } = await loadFixture(deployContractsFixture);
-      const { adminRole, upgraderRole } = getRoles();
-
-      await (await callNeuAs(admin).grantRole(adminRole, user.address as `0x${string}`)).wait();
-      await (await callNeuAs(admin).revokeRole(adminRole, admin.address as `0x${string}`)).wait();
-      await (await callNeuAs(user).grantRole(adminRole, user2.address as `0x${string}`)).wait();
-
-      expect(await callNeuAs(user).hasRole(adminRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callNeuAs(user2).hasRole(adminRole, user.address as `0x${string}`)).to.be.true;
-      expect(await callNeuAs(user).hasRole(adminRole, admin.address as `0x${string}`)).to.be.false;
-      await expect(callNeuAs(admin).grantRole(upgraderRole, user2.address as `0x${string}`)).to.be.reverted;
-    });
-
-    it("Reverts on setting roles for non-admin", async function () {
-      const { user, user2, callNeuAs, operator } = await loadFixture(deployContractsFixture);
-      const { upgraderRole, operatorRole } = getRoles();
-
-      await expect(callNeuAs(user).grantRole(upgraderRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callNeuAs(operator).grantRole(operatorRole, user2.address as `0x${string}`)).to.be.reverted;
-      await expect(callNeuAs(operator).grantRole(upgraderRole, operator.address as `0x${string}`)).to.be.reverted;
-    });
   });
+
+  describe("Access control", accessControlTestFactory(AccessControlSupportedContracts.Neu));
 });
