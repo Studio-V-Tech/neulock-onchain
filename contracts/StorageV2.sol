@@ -44,6 +44,12 @@ contract NeuStorageV2 is
         _entitlementContract = NeuEntitlement(entitlementContractAddress);
     }
 
+    function initializeV2(
+        address _entitlementContractAddress
+    ) public reinitializer(2) {
+        _entitlementContract = NeuEntitlement(_entitlementContractAddress);
+    }
+
     function saveData(uint256 tokenId, bytes memory data) external payable {
         // Call with tokenId = 0 if entitlement by token other than the NEU
         require(_entitlementContract.hasEntitlement(msg.sender), "Caller does not have entitlement");

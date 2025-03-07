@@ -1,8 +1,9 @@
 import { BaseContract, ContractTransactionResponse } from "ethers";
 
 import AccessControl from "./lib/access-control.model";
+import UUPSUpgradeable from "./lib/uups-upgradeable.model";
 
-interface MetadataBaseContract extends BaseContract, AccessControl {
+interface MetadataBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   addSeries(name: Uint8Array, priceInGwei: bigint, firstToken: bigint, maxTokens: bigint, fgColorRGB565: bigint, bgColorRGB565: bigint, accentColorRGB565: bigint, makeAvailable: boolean): Promise<ContractTransactionResponse >;
   createTokenMetadata(seriesIndex: bigint, originalPrice: bigint): Promise<{ tokenId: bigint, governance: boolean }>;
   deleteTokenMetadata(tokenId: bigint): Promise<ContractTransactionResponse>;

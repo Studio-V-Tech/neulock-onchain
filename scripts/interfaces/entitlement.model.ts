@@ -1,8 +1,9 @@
 import { BaseContract, ContractTransactionResponse } from "ethers";
 
 import AccessControl from "./lib/access-control.model";
+import UUPSUpgradeable from "./lib/uups-upgradeable.model";
 
-interface EntitlementBaseContract extends BaseContract, AccessControl {
+interface EntitlementBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   entitlementContracts(index: bigint): Promise<string>;
   addEntitlementContract(entitlementContract: `0x${string}`): Promise<ContractTransactionResponse>;
   removeEntitlementContract(entitlementContract: `0x${string}`): Promise<ContractTransactionResponse>;

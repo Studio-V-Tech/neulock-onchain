@@ -1,8 +1,9 @@
 import { BaseContract, ContractTransactionResponse } from "ethers";
 
 import AccessControl from "./lib/access-control.model";
+import UUPSUpgradeable from "./lib/uups-upgradeable.model";
 
-interface NeuBaseContract extends BaseContract, AccessControl {
+interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   ownerOf(token: bigint): Promise<`0x${string}`>;
   totalSupply(): Promise<bigint>;
   balanceOf(account: `0x${string}`): Promise<bigint>;
