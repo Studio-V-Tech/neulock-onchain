@@ -47,7 +47,7 @@ contract NeuEntitlement is
 
         // We won't check for the IERC721 interface, since any token that supports balanceOf() can be used
         try IERC721(entitlementContract).balanceOf(address(this)) {} catch {
-            revert("Entitlement contract does not support balanceOf()");
+            revert("Contract does not support balanceOf()");
         }
 
         entitlementContracts.push(entitlementContract);

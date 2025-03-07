@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-contract-sizer';
 import "hardhat-interface-generator";
+import '@unlock-protocol/hardhat-plugin';
 
 const NEULOCK_DEPLOYER_PRIVATE_KEY = vars.get("NEULOCK_DEPLOYER_PRIVATE_KEY");
 const SEPOLIA_PRIVATE_KEY = vars.get("SEPOLIA_PRIVATE_KEY");

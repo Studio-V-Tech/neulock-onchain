@@ -5,6 +5,7 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts-upgradeable": "^5.0.2",
     "@openzeppelin/hardhat-upgrades": "^3.2.1",
+    "@unlock-protocol/hardhat-plugin": "^0.2.3",
     "ethers": "^6.13.2",
     "hardhat": "^2.22.12",
     "hardhat-contract-sizer": "^2.10.0",
