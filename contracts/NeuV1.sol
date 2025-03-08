@@ -11,9 +11,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {IERC7496} from "./interfaces/IERC7496.sol";
-import {INeuMetadata} from "./interfaces/INeuMetadata.sol";
-import {INeu} from "./interfaces/INeu.sol";
-import {TokenMetadata} from "./Metadata.sol";
+import {INeuMetadata} from "./interfaces/INeuMetadataV1.sol";
+import {INeu} from "./interfaces/INeuV1.sol";
+import {TokenMetadata} from "./MetadataV1.sol";
 
 contract Neu is
     INeu,

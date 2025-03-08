@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.27;
 
-import {Neu} from "../Neu.sol";
+import {Neu} from "../NeuV1.sol";
 
 contract NeuHarness is Neu {
     function $_mint(address account, uint256 tokenId) external {

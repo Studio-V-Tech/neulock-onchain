@@ -7,8 +7,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import {INeuStorage} from "./interfaces/INeuStorage.sol";
-import {Neu} from "./Neu.sol";
+import {INeuStorage} from "./interfaces/INeuStorageV1.sol";
+import {Neu} from "./NeuV1.sol";
 
 contract NeuStorage is
     Initializable,

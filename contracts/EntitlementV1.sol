@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 
-import {INeuEntitlement} from "./interfaces/IEntitlement.sol";
+import {INeuEntitlement} from "./interfaces/IEntitlementV1.sol";
 
 contract NeuEntitlement is
     Initializable,

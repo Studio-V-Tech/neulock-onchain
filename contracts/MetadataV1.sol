@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import {IERC7496} from "./interfaces/IERC7496.sol";
-import {INeuMetadata} from "./interfaces/INeuMetadata.sol";
-import {NeuLogo} from "./Logo.sol";
+import {INeuMetadata} from "./interfaces/INeuMetadataV1.sol";
+import {NeuLogo} from "./LogoV1.sol";
 import {Bytes8Utils} from "./lib/Utils.sol";
 
 using Bytes8Utils for bytes8;
