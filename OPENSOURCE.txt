@@ -1,0 +1,19 @@
+Declaration of Open-Source Commitment
+
+Project Name: Neulock Onchain
+License: Creative Commons CC0 1.0 Universal
+
+We, the developers of Neulock Onchain Smart Contracts at Studio V, affirm that our project is currently open-source and will remain committed to a long-term open-source model. Our project is released under the CC0 1.0 Universal license, ensuring that all contributions, source code, and associated materials are freely available for public use, modification, and distribution without restriction.
+
+By adopting this license, we relinquish all copyright and related rights to the fullest extent permitted by law, thereby enabling unrestricted access and collaboration for developers, researchers, and users worldwide. We believe in the principles of transparency, accessibility, and decentralized innovation, aligning with the values of the open-source community.
+
+Our commitment to maintaining an open-source model includes:
+
+- Ensuring that all code and documentation remain publicly accessible.
+- Encouraging community participation and contributions.
+- Upholding open development practices and fostering an inclusive environment.
+- Avoiding restrictive licensing changes that could limit public access or reusability.
+
+Through this declaration, we affirm our dedication to the long-term sustainability of Neulock Onchain as an open-source initiative, in alignment with the values upheld by the broader open-source ecosystem.
+
+For more information and access to our source code, please visit: https://github.com/Studio-V-Tech/neulock-onchain .
