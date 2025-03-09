@@ -4,10 +4,16 @@ import {
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { BaseContract, ContractTransactionResponse } from "ethers";
 
 import { TokenMetadata, day, stringToBytes, seriesValue, getRoles, validateTokenMetadataCommonAttributes, parseSponsorPointsResponse, pointsTrait } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture, setUserDataFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
+
+
+interface NeuIncreaseBalance extends BaseContract {
+  increaseBalance(address: `0x${string}`, value: bigint): Promise<ContractTransactionResponse>;
+}
 
 describe("Neu", function () {
   describe("Deployment", function () {
@@ -276,6 +282,36 @@ describe("Neu", function () {
       expect(balanceAfter).to.equal(balanceBefore + seriesValue(wagmi).valueOf() + seriesValue(og).valueOf() - gas);
     });
 
+    it("Withdraws with value of token burned during refund window", async function () {
+      const { operator, user3, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user3).burn(3n)).wait();
+
+      const og = await callMetadataAs(operator).getSeries(ogId);
+      const balanceBefore = await ethers.provider.getBalance(operator.address);
+
+      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
+      const gas = withdrawalReceipt!.fee;
+
+      const balanceAfter = await ethers.provider.getBalance(operator.address);
+
+      expect(balanceAfter).to.equal(
+        balanceBefore + seriesValue(og).valueOf() - gas);
+    });
+
+    it("Withdraws nothing if contract has no balance", async function () {
+      const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
+
+      const balanceBefore = await ethers.provider.getBalance(operator.address);
+
+      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
+      const gas = withdrawalReceipt!.fee;
+
+      const balanceAfter = await ethers.provider.getBalance(operator.address);
+
+      expect(balanceAfter).to.equal(balanceBefore - gas);
+    });
+
     it("Reverts on non-operator withdraw", async function () {
       const { user, callNeuAs: callNeuAs } = await loadFixture(deployContractsFixture);
 
@@ -381,15 +417,15 @@ describe("Neu", function () {
 
       validateTokenMetadataCommonAttributes(ogTokenMetadata);
 
-      expect(ogTokenMetadata.name).to.equal("NEU #1 OG");
-      expect(ogTokenMetadata.attributes[0].value).to.equal("OG");
+      expect(ogTokenMetadata.name).to.equal("NEU #1 OG1");
+      expect(ogTokenMetadata.attributes[0].value).to.equal("OG1");
       expect(ogTokenMetadata.attributes[1].value).to.equal("Yes");
       expect(ogTokenMetadata.attributes[2].value).to.equal(100);
 
       validateTokenMetadataCommonAttributes(wagmiTokenMetadata);
 
-      expect(wagmiTokenMetadata.name).to.equal("NEU #100002 WAGMI");
-      expect(wagmiTokenMetadata.attributes[0].value).to.equal("WAGMI");
+      expect(wagmiTokenMetadata.name).to.equal("NEU #100002 WAGMI1");
+      expect(wagmiTokenMetadata.attributes[0].value).to.equal("WAGMI1");
       expect(wagmiTokenMetadata.attributes[1].value).to.equal("No");
       expect(wagmiTokenMetadata.attributes[2].value).to.equal(1000);
     });
@@ -420,8 +456,8 @@ describe("Neu", function () {
 
       validateTokenMetadataCommonAttributes(wagmiTokenMetadata);
 
-      expect(wagmiTokenMetadata.name).to.equal("NEU #100004 WAGMI");
-      expect(wagmiTokenMetadata.attributes[0].value).to.equal("WAGMI");
+      expect(wagmiTokenMetadata.name).to.equal("NEU #100004 WAGMI1");
+      expect(wagmiTokenMetadata.attributes[0].value).to.equal("WAGMI1");
       expect(wagmiTokenMetadata.attributes[1].value).to.equal("No");
       expect(wagmiTokenMetadata.attributes[2].value).to.equal(1000);
 
@@ -576,6 +612,14 @@ describe("Neu", function () {
 
       await expect(callNeuAs(user).setWeiPerSponsorPoint(42n * 10n ** 9n)).to.be.reverted;
     });
+
+    it("Gets trait metadata URI correctly", async function () {
+      const { user, callNeuAs } = await loadFixture(deployContractsFixture);
+
+      const uri = await callNeuAs(user).getTraitMetadataURI();
+
+      expect(uri).to.equal("data:application/json;base64,eyJ0cmFpdHMiOnsicG9pbnRzIjp7ImRpc3BsYXlOYW1lIjoiU3BvbnNvciBQb2ludHMiLCJkYXRhVHlwZSI6eyJ0eXBlIjoiZGVjaW1hbCJ9LCJ2YWxpZGF0ZU9uU2FsZSI6InJlcXVpcmVVaW50R3RlIn19fQ==");
+    });
   });
 
   describe("Royalty", function () {
@@ -586,6 +630,18 @@ describe("Neu", function () {
 
       expect(recipient).to.equal(await neu.getAddress());
       expect(value).to.equal(10n ** 8n);
+    });
+  });
+
+  describe("Increase balance test (not covered otherwise)", function () {
+    it("Reverts on calling _increaseBalance", async function () {
+      const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
+
+      const NeuIncreaseBalance = await ethers.getContractFactory("NeuIncreaseBalance");
+      const neuIncreaseBalance = await NeuIncreaseBalance.deploy();
+      await neuIncreaseBalance.waitForDeployment();
+
+      await expect((neuIncreaseBalance.connect(operator) as NeuIncreaseBalance).increaseBalance(operator.address as `0x${string}`, 42n)).to.be.revertedWithCustomError(neuIncreaseBalance, "ERC721EnumerableForbiddenBatchMint");
     });
   });
 

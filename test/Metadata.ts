@@ -22,7 +22,7 @@ describe("Metadata", function () {
       const og = await callMetadataAs(user).getSeries(ogId);
       const unique = await callMetadataAs(user).getSeries(uniqueId);
 
-      expect(bytesToString(wagmi.name)).to.equal("WAGMI");
+      expect(bytesToString(wagmi.name)).to.equal("WAGMI1");
       expect(wagmi.priceInGwei).to.equal(1337n * 10n ** 4n);
       expect(wagmi.firstToken).to.equal(100001);
       expect(wagmi.maxTokens).to.equal(1000);
@@ -31,7 +31,7 @@ describe("Metadata", function () {
       expect(wagmi.isAvailable).to.be.true;
       validateSvg(wagmi.logoSvg);
 
-      expect(bytesToString(og.name)).to.equal("OG");
+      expect(bytesToString(og.name)).to.equal("OG1");
       expect(og.priceInGwei).to.equal(1337n * 10n ** 5n);
       expect(og.firstToken).to.equal(1);
       expect(og.maxTokens).to.equal(100);
@@ -48,6 +48,15 @@ describe("Metadata", function () {
       expect(unique.burntTokens).to.equal(0);
       expect(unique.isAvailable).to.be.true;
       validateSvg(unique.logoSvg);
+    });
+
+    it("Gets series availability correctly", async function () {
+      const { user, callMetadataAs, wagmiId, ogId, uniqueId } = await loadFixture(setSeriesFixture);
+
+      expect(await callMetadataAs(user).isSeriesAvailable(wagmiId)).to.be.true;
+      expect(await callMetadataAs(user).isSeriesAvailable(ogId)).to.be.false;
+      expect(await callMetadataAs(user).isSeriesAvailable(uniqueId)).to.be.true;
+      expect(await callMetadataAs(user).isSeriesAvailable(42n)).to.be.false;
     });
 
     it("Sets minted count correctly", async function () {
@@ -83,7 +92,7 @@ describe("Metadata", function () {
     it("Reverts when adding series with existing name", async function () {
       const { operator, callMetadataAs } = await loadFixture(setSeriesFixture);
 
-      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMI'), 1337n * 10n ** 4n, 200000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("Series name already exists");
+      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMI1'), 1337n * 10n ** 4n, 200000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("Series name already exists");
     });
 
     it("Reverts when adding series overlapping with existing one", async function () {
@@ -190,15 +199,15 @@ describe("Metadata", function () {
 
       validateTokenMetadataCommonAttributes(ogTokenMetadata);
 
-      expect(ogTokenMetadata.name).to.equal("NEU #1 OG");
-      expect(ogTokenMetadata.attributes[0].value).to.equal("OG");
+      expect(ogTokenMetadata.name).to.equal("NEU #1 OG1");
+      expect(ogTokenMetadata.attributes[0].value).to.equal("OG1");
       expect(ogTokenMetadata.attributes[1].value).to.equal("Yes");
       expect(ogTokenMetadata.attributes[2].value).to.equal(100);
 
       validateTokenMetadataCommonAttributes(wagmiTokenMetadata);
 
-      expect(wagmiTokenMetadata.name).to.equal("NEU #100002 WAGMI");
-      expect(wagmiTokenMetadata.attributes[0].value).to.equal("WAGMI");
+      expect(wagmiTokenMetadata.name).to.equal("NEU #100002 WAGMI1");
+      expect(wagmiTokenMetadata.attributes[0].value).to.equal("WAGMI1");
       expect(wagmiTokenMetadata.attributes[1].value).to.equal("No");
       expect(wagmiTokenMetadata.attributes[2].value).to.equal(1000);
     });
@@ -220,6 +229,14 @@ describe("Metadata", function () {
       expect(wagmiTokenTrait).to.equal(0);
     });
 
+    it("Reverts on getting nonexistant dynamic trait", async function () {
+      const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
+
+      const nonexistantTrait = stringToBytes("nonexistant", 32);
+
+      await expect(callMetadataAs(user).getTraitValue(1n, nonexistantTrait)).to.be.revertedWith("Trait key not found");
+    });
+
     it("Gets multiple dynamic traits correctly", async function () {
       const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
 
@@ -230,6 +247,25 @@ describe("Metadata", function () {
       const ogTokenTrait = ogTokenTraitBytes.map((trait) => parseInt(trait.substring(2), 16));
 
       expect(ogTokenTrait[0]).to.equal(1337);
+    });
+  });
+
+  describe("Logo", function () {
+    it("Sets logo contract correctly", async function () {
+      const { operator, user, storage, logo, callMetadataAs, wagmiId } = await loadFixture(purchasedTokensFixture);
+
+      const storageAddress = await storage.getAddress() as `0x${string}`;
+      const logoAddress = await logo.getAddress() as `0x${string}`;
+
+      await (await callMetadataAs(operator).setLogoContract(storageAddress)).wait();
+
+      await expect(callMetadataAs(user).getSeries(wagmiId)).to.be.reverted;
+
+      await (await callMetadataAs(operator).setLogoContract(logoAddress)).wait();
+
+      const wagmi = await callMetadataAs(user).getSeries(wagmiId);
+
+      validateSvg(wagmi.logoSvg);
     });
   });
 

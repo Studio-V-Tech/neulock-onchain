@@ -20,7 +20,7 @@ interface PublicUnlockBaseContract extends BaseContract {
 export async function deployContractsFixture({ isTest = false } = {}) {
   const [operator, upgrader, admin, user, user2, user3, user4, user5] = await ethers.getSigners();
 
-  const [neuDeployment, storageDeployment, metadataDeployment, _logoDeployment, entitlementDeployment] = await deployContracts({
+  const [neuDeployment, storageDeployment, metadataDeployment, logoDeployment, entitlementDeployment] = await deployContracts({
     isTest,
   });
 
@@ -55,27 +55,30 @@ export async function deployContractsFixture({ isTest = false } = {}) {
     return contract.connect(runner) as EntitlementBaseContract;
   }
 
+  const Logo = await ethers.getContractFactory("NeuLogo");
+  const logo = Storage.attach(await logoDeployment.getAddress());
+
   const callEntitlementAs = (runner: HardhatEthersSigner) => setEntitlementCallerFactory(entitlement, runner);
 
   const Entitlement = await ethers.getContractFactory("NeuEntitlement");
   const entitlement = Entitlement.attach(await entitlementDeployment.getAddress());
 
-  return { neu, metadata, storage, entitlement, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, neuDeployment };
+  return { neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, neuDeployment };
 }
 
 export async function setSeriesFixture() {
-  const { neu, metadata, storage, entitlement, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callEntitlementAs, callStorageAs } = await loadFixture(deployContractsFixture);
+  const { neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callEntitlementAs, callStorageAs } = await loadFixture(deployContractsFixture);
 
-  await (await callMetadataAs(operator).addSeries(stringToBytes('WAGMI'), 1337n * 10n ** 4n, 100001n, 1000n, 58328n, 6279n, 65153n, true)).wait();
-  await (await callMetadataAs(operator).addSeries(stringToBytes('OG'), 1337n * 10n ** 5n, 1n, 100n, 58328n, 6279n, 65153n, false)).wait();
+  await (await callMetadataAs(operator).addSeries(stringToBytes('WAGMI1'), 1337n * 10n ** 4n, 100001n, 1000n, 58328n, 6279n, 65153n, true)).wait();
+  await (await callMetadataAs(operator).addSeries(stringToBytes('OG1'), 1337n * 10n ** 5n, 1n, 100n, 58328n, 6279n, 65153n, false)).wait();
   await (await callMetadataAs(operator).addSeries(stringToBytes('UNIQUE'), 1n, 101n, 1n, 58328n, 6279n, 65153n, true)).wait();
 
-  return { neu, metadata, storage, entitlement, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId: 0n, ogId: 1n, uniqueId: 2n };
+  return { neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId: 0n, ogId: 1n, uniqueId: 2n };
 }
 
 export async function purchasedTokensFixture() {
   const {
-    neu, metadata, storage, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId
+    neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId
   } = await loadFixture(setSeriesFixture);
 
   await (await callMetadataAs(operator).setSeriesAvailability(ogId, true)).wait();
@@ -124,12 +127,12 @@ export async function purchasedTokensFixture() {
   // Day5
   await time.increase(day);
 
-  return { neu, metadata, admin, storage, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId };
+  return { neu, metadata, admin, storage, entitlement, logo, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId };
 }
 
 export async function setUserDataFixture() {
   const {
-    neu, metadata, storage, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId
+    neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId
   } = await loadFixture(purchasedTokensFixture);
 
   await (await callStorageAs(user).saveData(100001n, userDataBytesArray[1], { value: 0n })).wait();
@@ -138,12 +141,12 @@ export async function setUserDataFixture() {
   await (await callStorageAs(user4).saveData(100004n, userDataBytesArray[4], { value: 10n ** 18n })).wait();
   await (await callStorageAs(user5).saveData(5n, userDataBytesArray[5], { value: 9n * 10n ** 20n })).wait();
 
-  return { neu, metadata, admin, storage, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId };
+  return { neu, metadata, admin, storage, entitlement, logo, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, wagmiId, ogId, uniqueId };
 }
 
 export async function unlockFixture() {
   const {
-    neu, metadata, storage, entitlement, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId
+    neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId
   } = await loadFixture(setSeriesFixture);
 
   await unlock.deployProtocol();
@@ -170,15 +173,15 @@ export async function unlockFixture() {
   // User3 - Lock - Day 0
   await (await (lock.connect(user3) as PublicUnlockBaseContract).purchase([0n], [user3.address], [user3.address], [user3.address], [new Uint8Array()], { value: 100000000n })).wait();
 
-  return { neu, metadata, storage, entitlement, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId, lock };
+  return { neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId, lock };
 }
 
 export async function entitlementFixture() {
   const {
-    neu, metadata, storage, entitlement, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId, lock
+    neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId, lock
   } = await loadFixture(unlockFixture);
 
   await callEntitlementAs(operator).addEntitlementContract((await lock.getAddress()) as `0x${string}`);
 
-  return { neu, metadata, storage, entitlement, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId, lock };
+  return { neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, wagmiId, lock };
 }

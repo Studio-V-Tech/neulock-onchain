@@ -124,6 +124,56 @@ describe("Entitlement", function () {
     });
   });
 
+  describe("User entitlement listing", function () {
+    it("Lists entitlement for user with only NEU tokens", async function () {
+      const { callEntitlementAs, user2, user5, neu } = await loadFixture(entitlementFixture);
+      
+      const neuAddress = await neu.getAddress() as `0x${string}`;
+      const user2Address = user2.address as `0x${string}`;
+
+      const entitlements = await callEntitlementAs(user5).userEntitlementContracts(user2Address);
+
+      expect(entitlements).to.have.lengthOf(1);
+      expect(entitlements[0]).to.equal(neuAddress);
+    });
+
+    it("Lists entitlement for user with only additional entitlement", async function () {
+      const { callEntitlementAs, user3, user5, lock } = await loadFixture(entitlementFixture);
+
+      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const user3Address = user3.address as `0x${string}`;
+
+      const entitlements = await callEntitlementAs(user5).userEntitlementContracts(user3Address);
+
+      expect(entitlements).to.have.lengthOf(1);
+      expect(entitlements[0]).to.equal(lockAddress);
+    });
+
+    it("Lists entitlement for user with both NEU and additional entitlement", async function () {
+      const { callEntitlementAs, user, user5, neu, lock } = await loadFixture(entitlementFixture);
+
+      const neuAddress = await neu.getAddress() as `0x${string}`;
+      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const userAddress = user.address as `0x${string}`;
+
+      const entitlements = await callEntitlementAs(user5).userEntitlementContracts(userAddress);
+
+      expect(entitlements).to.have.lengthOf(2);
+      expect(entitlements[0]).to.equal(neuAddress);
+      expect(entitlements[1]).to.equal(lockAddress);
+    });
+
+    it("Lists entitlement for user with no entitlement", async function () {
+      const { callEntitlementAs, user4, user5 } = await loadFixture(entitlementFixture);
+
+      const user4Address = user4.address as `0x${string}`;
+
+      const entitlements = await callEntitlementAs(user5).userEntitlementContracts(user4Address);
+
+      expect(entitlements).to.have.lengthOf(0);
+    });
+  });
+
   describe("Access control specifics", function () {
     it("Obeys new roles in add contract calls", async function () {
       const { admin, operator, user, callEntitlementAs, lock } = await loadFixture(unlockFixture);
