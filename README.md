@@ -3,7 +3,8 @@ Neulock Web3 Password Manager smart contracts
 
 ## Test
 
-npx hardhat test
+npm run test
+npm run coverage
 
 ## Usage
 
