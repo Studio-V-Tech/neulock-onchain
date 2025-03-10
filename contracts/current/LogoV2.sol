@@ -28,7 +28,7 @@ contract NeuLogoV2 is INeuLogoV1 {
         uint8 g = uint8((color & 0x07E0) >> 3);
         uint8 b = uint8((color & 0x001F) << 3);
 
-        return string(abi.encodePacked(
+        return string(string.concat(
             _byteToHex(r),
             _byteToHex(g),
             _byteToHex(b)
@@ -46,27 +46,27 @@ contract NeuLogoV2 is INeuLogoV1 {
     }
 
     function makeLogo(string calldata tokenId, string calldata seriesName, uint16 foregroundColor, uint16 backgroundColor, uint16 accentColor) external view returns (string memory) {
-        string memory part1 = string(abi.encodePacked(
+        string memory part1 = string(string.concat(
             _beforeForegroundColor,
             _rgb565ToHex(foregroundColor),
             _beforeBackgroundColor,
             _rgb565ToHex(backgroundColor)
         ));
 
-        string memory part2 = string(abi.encodePacked(
+        string memory part2 = string(string.concat(
             _beforeAccentColor,
             _rgb565ToHex(accentColor),
             _beforeTokenId
         ));
 
-        string memory part3 = string(abi.encodePacked(
+        string memory part3 = string(string.concat(
             tokenId,
             _beforeSeriesName,
             _toLowerCase(seriesName), // We're using a lowercase-only font
             _tail
         ));
 
-        return string(abi.encodePacked(
+        return string(string.concat(
             part1,
             part2,
             part3

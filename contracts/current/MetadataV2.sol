@@ -112,9 +112,10 @@ contract NeuMetadataV2 is
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
-        return string(abi.encodePacked(
+        return string.concat(
             "data:application/json;base64,",
-            Base64.encode(_makeJsonMetadata(tokenId))));
+            Base64.encode(_makeJsonMetadata(tokenId))
+        );
     }
 
     function isUserMinted(uint256 tokenId) external view returns (bool) {
@@ -330,11 +331,11 @@ contract NeuMetadataV2 is
         Series memory series = _series[seriesIndex];
         string memory governance = _givesGovernanceAccess(seriesIndex) ? "Yes" : "No";
         string memory seriesName = series.name.toString();
-        string memory tokenName = string(abi.encodePacked(tokenId.toString(), ' ', seriesName));
+        string memory tokenName = string.concat(tokenId.toString(), ' ', seriesName);
         string memory logoSvg = Base64.encode(bytes(_logo.makeLogo(
             tokenId.toString(), seriesName, series.fgColorRGB565, series.bgColorRGB565, series.accentColorRGB565)));
 
-        return abi.encodePacked(
+        return bytes(string.concat(
             '{"description": "Neulock Password Manager membership NFT - neulock.app", "name": "NEU #',
             tokenName,
             '", "image": "data:image/svg+xml;base64,',
@@ -348,7 +349,7 @@ contract NeuMetadataV2 is
             '},{"trait_type": "Mint Date", "display_type": "date", "value": ',
             uint256(metadata.mintedAt).toString(),
             '}]}'
-        );
+        ));
     }
 
     function _seriesOfToken(uint256 tokenId) private view returns (uint16) {
