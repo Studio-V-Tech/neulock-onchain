@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity 0.8.28;
 
 import {NeuV1} from "../old/NeuV1.sol";
 import {NeuV2} from "../current/NeuV2.sol";

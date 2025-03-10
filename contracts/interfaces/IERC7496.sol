@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 // Source of this file: https://github.com/ProjectOpenSea/shipyard-core/blob/main/src/dynamic-traits/interfaces/IERC7496.sol
-pragma solidity ^0.8.19;
+pragma solidity 0.8.28;
 
 interface IERC7496 {
     /* Events */

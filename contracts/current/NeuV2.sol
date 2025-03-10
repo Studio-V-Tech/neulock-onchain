@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 // Compatible with OpenZeppelin Contracts ^5.0.0
-pragma solidity ^0.8.27;
+pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
