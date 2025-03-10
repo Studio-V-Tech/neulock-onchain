@@ -8,9 +8,14 @@ npm run coverage
 
 ## Analyzers
 
+### Aderyn
+
+Install Aderyn following instructions from https://github.com/Cyfrin/aderyn?tab=readme-ov-file#installation . Then run with:
+npm run analyze:aderyn
+
 ### Slither
 
-Install slither following instructions from https://github.com/crytic/slither?tab=readme-ov-file#how-to-install . Then run with:
+Install Slither following instructions from https://github.com/crytic/slither?tab=readme-ov-file#how-to-install . Then run with:
 npm run analyze:slither
 
 ### Mythril
