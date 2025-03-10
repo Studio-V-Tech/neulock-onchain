@@ -3,7 +3,7 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "coverage": "hardhat coverage",
-    "analize:slither": "slither --filter-paths '(mocks/|test/|harnesses/)' ."
+    "analyze:slither": "slither --filter-paths '(mocks/|test/|harnesses/)' ."
   },
   "devDependencies": {
     "@csquare/random-bytes-seed": "^0.1.3",

@@ -6,6 +6,25 @@ Neulock Web3 Password Manager smart contracts
 npm run test
 npm run coverage
 
+## Analyzers
+
+### Slither
+
+Install slither following instructions from https://github.com/crytic/slither?tab=readme-ov-file#how-to-install . Then run with:
+npm run analyze:slither
+
+### Mythril
+
+#### Local installation
+
+Install Mythril following instructions from https://mythril-classic.readthedocs.io/en/develop/installation.html . Then run for each contract file, as in the example:
+myth analyze /tmp/contracts/NeuV1.sol --solc-json /tmp/mythril-local.json
+
+#### Using Docker
+
+Use the following example for each contract file:
+sudo docker run -v $(pwd):/tmp mythril/myth analyze /tmp/contracts/NeuV1.sol --solc-json /tmp/mythril-docker.json
+
 ## Usage
 
 ### Debug
