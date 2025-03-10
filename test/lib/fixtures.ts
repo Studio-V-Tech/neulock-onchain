@@ -24,7 +24,7 @@ export async function deployContractsFixture({ isTest = false } = {}) {
     isTest,
   });
 
-  const Neu = await ethers.getContractFactory(isTest ? "NeuHarness" : "Neu");
+  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV2" : "NeuV2");
   const neu = Neu.attach(await neuDeployment.getAddress());
 
   function setNeuCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): NeuBaseContract {
@@ -39,7 +39,7 @@ export async function deployContractsFixture({ isTest = false } = {}) {
 
   const callMetadataAs = (runner: HardhatEthersSigner) => setMetadataCallerFactory(metadata, runner);
 
-  const Metadata = await ethers.getContractFactory("NeuMetadata");
+  const Metadata = await ethers.getContractFactory("NeuMetadataV2");
   const metadata = Metadata.attach(await metadataDeployment.getAddress());
 
   function setStorageCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): StorageBaseContract {
@@ -48,19 +48,19 @@ export async function deployContractsFixture({ isTest = false } = {}) {
 
   const callStorageAs = (runner: HardhatEthersSigner) => setStorageCallerFactory(storage, runner);
 
-  const Storage = await ethers.getContractFactory("NeuStorage");
+  const Storage = await ethers.getContractFactory("NeuStorageV2");
   const storage = Storage.attach(await storageDeployment.getAddress());
 
   function setEntitlementCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): EntitlementBaseContract {
     return contract.connect(runner) as EntitlementBaseContract;
   }
 
-  const Logo = await ethers.getContractFactory("NeuLogo");
+  const Logo = await ethers.getContractFactory("NeuLogoV2");
   const logo = Storage.attach(await logoDeployment.getAddress());
 
   const callEntitlementAs = (runner: HardhatEthersSigner) => setEntitlementCallerFactory(entitlement, runner);
 
-  const Entitlement = await ethers.getContractFactory("NeuEntitlement");
+  const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
   const entitlement = Entitlement.attach(await entitlementDeployment.getAddress());
 
   return { neu, metadata, storage, entitlement, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, neuDeployment };

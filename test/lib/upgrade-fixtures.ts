@@ -3,7 +3,7 @@ import {
   loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { ethers, upgrades } from "hardhat";
-import { BaseContract, ContractTransactionResponse } from "ethers";
+import { BaseContract } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { day, stringToBytes, seriesValue, userDataBytesArray } from "../../scripts/lib/utils";
@@ -20,7 +20,7 @@ export async function deployContractsV1Fixture({ isTest = false } = {}) {
     isTest,
   });
 
-  const NeuV1 = await ethers.getContractFactory(isTest ? "NeuHarness" : "Neu");
+  const NeuV1 = await ethers.getContractFactory(isTest ? "NeuHarnessV1" : "NeuV1");
   const neuV1 = NeuV1.attach(await neuDeployment.getAddress());
 
   function setNeuCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): NeuBaseContract {
@@ -35,7 +35,7 @@ export async function deployContractsV1Fixture({ isTest = false } = {}) {
 
   const callMetadataAs = (runner: HardhatEthersSigner) => setMetadataCallerFactory(metadataV1, runner);
 
-  const MetadataV1 = await ethers.getContractFactory("NeuMetadata");
+  const MetadataV1 = await ethers.getContractFactory("NeuMetadataV1");
   const metadataV1 = MetadataV1.attach(await metadataDeployment.getAddress());
 
   function setStorageCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): StorageBaseContract {
@@ -44,7 +44,7 @@ export async function deployContractsV1Fixture({ isTest = false } = {}) {
 
   const callStorageAs = (runner: HardhatEthersSigner) => setStorageCallerFactory(storageV1, runner);
 
-  const StorageV1 = await ethers.getContractFactory("NeuStorage");
+  const StorageV1 = await ethers.getContractFactory("NeuStorageV1");
   const storageV1 = StorageV1.attach(await storageDeployment.getAddress());
 
   function setEntitlementCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): EntitlementBaseContract {
@@ -53,7 +53,7 @@ export async function deployContractsV1Fixture({ isTest = false } = {}) {
 
   const callEntitlementAs = (runner: HardhatEthersSigner) => setEntitlementCallerFactory(entitlementV1, runner);
 
-  const EntitlementV1 = await ethers.getContractFactory("NeuEntitlement");
+  const EntitlementV1 = await ethers.getContractFactory("NeuEntitlementV1");
   const entitlementV1 = EntitlementV1.attach(await entitlementDeployment.getAddress());
 
   return { neuV1, metadataV1, storageV1, entitlementV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs };

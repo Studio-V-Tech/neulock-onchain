@@ -6,25 +6,20 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import {INeuStorageV2} from "./interfaces/INeuStorageV2.sol";
-import {INeu} from "./interfaces/INeuV1.sol";
-import {INeuEntitlement} from "./interfaces/IEntitlementV1.sol";
+import {INeuStorageV1} from "../interfaces/INeuStorageV1.sol";
+import {NeuV1} from "./NeuV1.sol";
 
-interface INeuToken is INeu, IERC721 {}
-
-contract NeuStorageV2 is
+contract NeuStorageV1 is
     Initializable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    INeuStorageV2
+    INeuStorageV1
 {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    INeuToken private _neuContract;
+    NeuV1 private _neuContract;
     mapping(address => bytes) private _userdata;
-    INeuEntitlement private _entitlementContract;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -34,8 +29,7 @@ contract NeuStorageV2 is
     function initialize(
         address defaultAdmin,
         address upgrader,
-        address neuContractAddress,
-        address entitlementContractAddress
+        address neuContractAddress
     ) public initializer {
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -43,21 +37,13 @@ contract NeuStorageV2 is
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(UPGRADER_ROLE, upgrader);
 
-        _neuContract = INeuToken(neuContractAddress);
-        _entitlementContract = INeuEntitlement(entitlementContractAddress);
-    }
-
-    function initializeV2(
-        address _entitlementContractAddress
-    ) public reinitializer(2) {
-        _entitlementContract = INeuEntitlement(_entitlementContractAddress);
+        _neuContract = NeuV1(neuContractAddress);
     }
 
     function saveData(uint256 tokenId, bytes memory data) external payable {
-        // Call with tokenId = 0 if entitlement by token other than the NEU
-        require(_entitlementContract.hasEntitlement(msg.sender), "Caller does not have entitlement");
+        require(_neuContract.ownerOf(tokenId) == msg.sender, "Caller does not own NEU token");
 
-        if (msg.value > 0 && _neuContract.ownerOf(tokenId) == msg.sender) {
+        if (msg.value > 0) {
             _neuContract.increaseSponsorPoints{value: msg.value}(tokenId);
         }
 

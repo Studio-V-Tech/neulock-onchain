@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-interface INeuEntitlement {
+interface INeuEntitlementV1 {
     function entitlementContracts(uint index) external view returns (address);
     function addEntitlementContract(address entitlementContract) external;
     function removeEntitlementContract(address entitlementContract) external;

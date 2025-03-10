@@ -14,11 +14,11 @@ async function deployContractsV1({ isTest } : { isTest?: boolean } = {}
   const upgraderAddress = ChainTypeAccount[chainType][Account.upgrader];
   const operatorAddress = ChainTypeAccount[chainType][Account.operator];
 
-  const Neu = await ethers.getContractFactory(isTest ? "NeuHarness" : "Neu");
-  const Metadata = await ethers.getContractFactory("NeuMetadata");
-  const Storage = await ethers.getContractFactory("NeuStorage");
-  const Logo = await ethers.getContractFactory("NeuLogo");
-  const Entitlement = await ethers.getContractFactory("NeuEntitlement");
+  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV1" : "NeuV1");
+  const Metadata = await ethers.getContractFactory("NeuMetadataV1");
+  const Storage = await ethers.getContractFactory("NeuStorageV1");
+  const Logo = await ethers.getContractFactory("NeuLogoV1");
+  const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
 
   let operatorSigner = chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
 

@@ -7,10 +7,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import {IERC7496} from "./interfaces/IERC7496.sol";
-import {INeuMetadata} from "./interfaces/INeuMetadataV1.sol";
-import {NeuLogo} from "./LogoV1.sol";
-import {Bytes8Utils} from "./lib/Utils.sol";
+import {IERC7496} from "../interfaces/IERC7496.sol";
+import {INeuMetadataV1} from "../interfaces/INeuMetadataV1.sol";
+import {NeuLogoV1} from "./LogoV1.sol";
+import {Bytes8Utils} from "../lib/Utils.sol";
 
 using Bytes8Utils for bytes8;
 using Strings for uint256;
@@ -33,11 +33,11 @@ struct TokenMetadata {
     uint40 mintedAt;
 }
 
-contract NeuMetadata is
+contract NeuMetadataV1 is
     Initializable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    INeuMetadata
+    INeuMetadataV1
 {
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
     bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");
@@ -49,7 +49,7 @@ contract NeuMetadata is
     mapping(uint256 => TokenMetadata) private _tokenMetadata;
     Series[] private _series;
     uint16[] private _availableSeries;
-    NeuLogo private _logo;
+    NeuLogoV1 private _logo;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -71,7 +71,7 @@ contract NeuMetadata is
         _grantRole(OPERATOR_ROLE, operator);
         _grantRole(NEU_ROLE, neuContract);
 
-        _logo = NeuLogo(logoContract);
+        _logo = NeuLogoV1(logoContract);
     }
 
     function createTokenMetadata(uint16 seriesIndex, uint256 originalPrice) external onlyRole(NEU_ROLE) returns (
@@ -269,7 +269,7 @@ contract NeuMetadata is
     }
 
     function setLogoContract(address logoContract) external onlyRole(OPERATOR_ROLE) {
-        _logo = NeuLogo(logoContract);
+        _logo = NeuLogoV1(logoContract);
     }
 
     function _setTokenMetadata(

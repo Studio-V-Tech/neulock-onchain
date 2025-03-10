@@ -6,13 +6,13 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 
-import {INeuEntitlement} from "./interfaces/IEntitlementV1.sol";
+import {INeuEntitlementV1} from "../interfaces/IEntitlementV1.sol";
 
-contract NeuEntitlement is
+contract NeuEntitlementV1 is
     Initializable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    INeuEntitlement
+    INeuEntitlementV1
 {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");

@@ -23,12 +23,12 @@ npm run analyze:slither
 #### Local installation
 
 Install Mythril following instructions from https://mythril-classic.readthedocs.io/en/develop/installation.html . Then run for each contract file, as in the example:
-myth analyze /tmp/contracts/NeuV1.sol --solc-json /tmp/mythril-local.json
+myth analyze /tmp/contracts/current/NeuV2.sol --solc-json /tmp/mythril-local.json
 
 #### Using Docker
 
 Use the following example for each contract file:
-sudo docker run -v $(pwd):/tmp mythril/myth analyze /tmp/contracts/NeuV1.sol --solc-json /tmp/mythril-docker.json
+sudo docker run -v $(pwd):/tmp mythril/myth analyze /tmp/contracts/current/NeuV2.sol --solc-json /tmp/mythril-docker.json
 
 ## Usage
 
@@ -60,6 +60,6 @@ CONTRACT=Neu|NeuStorage|NeuMetadata npx hardhat run scripts/upgrade.ts --network
 ## Interactions
 
 npx hardhat console --network [localhost | sepolia]
-> const Neu = await ethers.getContractFactory("Neu");
+> const Neu = await ethers.getContractFactory("NeuV2");
 > const neu = await Neu.attach("0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512");
 > (await neu.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString();

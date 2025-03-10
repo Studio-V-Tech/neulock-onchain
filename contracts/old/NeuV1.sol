@@ -10,13 +10,13 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Royalt
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IERC7496} from "./interfaces/IERC7496.sol";
-import {INeuMetadata} from "./interfaces/INeuMetadataV1.sol";
-import {INeu} from "./interfaces/INeuV1.sol";
+import {IERC7496} from "../interfaces/IERC7496.sol";
+import {INeuMetadataV1} from "../interfaces/INeuMetadataV1.sol";
+import {INeuV1} from "../interfaces/INeuV1.sol";
 import {TokenMetadata} from "./MetadataV1.sol";
 
-contract Neu is
-    INeu,
+contract NeuV1 is
+    INeuV1,
     IERC7496,
     Initializable,
     ERC721Upgradeable,
@@ -31,7 +31,7 @@ contract Neu is
     bytes32 public constant POINTS_INCREASER_ROLE = keccak256("POINTS_INCREASER_ROLE");
 
     uint256 public weiPerSponsorPoint;
-    INeuMetadata private _neuMetadata;
+    INeuMetadataV1 private _neuMetadata;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -85,7 +85,7 @@ contract Neu is
     function setMetadataContract(
         address newMetadataContract
     ) external onlyRole(OPERATOR_ROLE) {
-        _neuMetadata = INeuMetadata(newMetadataContract);
+        _neuMetadata = INeuMetadataV1(newMetadataContract);
     }
 
     function setStorageContract(

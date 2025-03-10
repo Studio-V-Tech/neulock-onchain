@@ -3,8 +3,8 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "coverage": "hardhat coverage",
-    "analyze:slither": "slither --filter-paths '(mocks/|harnesses/)' .",
-    "analyze:aderyn": "aderyn -x mocks,harnesses,StorageV1 -o aderyn-report.md ."
+    "analyze:slither": "slither --filter-paths '(mocks/|harnesses/|old/)' .",
+    "analyze:aderyn": "aderyn -x mocks,harnesses,old -o aderyn-report.md ."
   },
   "devDependencies": {
     "@csquare/random-bytes-seed": "^0.1.3",

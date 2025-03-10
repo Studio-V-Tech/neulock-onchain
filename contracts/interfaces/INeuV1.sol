@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-interface INeu {
+interface INeuV1 {
   function safeMint ( address to, uint16 seriesIndex ) external;
   function safeMintPublic ( uint16 seriesIndex ) payable external;
   function setMetadataContract ( address newMetadataContract ) external;

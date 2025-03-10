@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import {INeuLogo} from "./interfaces/ILogoV1.sol";
+import {INeuLogoV1} from "../interfaces/ILogoV1.sol";
 
-contract NeuLogo is INeuLogo {
+contract NeuLogoV1 is INeuLogoV1 {
     string private _beforeForegroundColor = '<svg width="500" height="500" viewBox="0 0 500 500" zoomAndPan="magnify" preserveAspectRatio="xMidYMid" version="1.0" xmlns="http://www.w3.org/2000/svg"><style>.f { fill: #';
     string private _beforeBackgroundColor = '; } .b { fill: #';
     string private _beforeAccentColor = '; } .a { fill: #';
