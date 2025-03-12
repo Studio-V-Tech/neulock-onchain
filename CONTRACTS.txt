@@ -1,0 +1,575 @@
+CONTRACTS.txt
+
+This document describes how to call the external functions of the NeuStorageV2, NeuEntitlementV1, and NeuMetadataV2 smart contracts. Please note that you need an Ethereum wallet and likely an interface to interact with these functions on the blockchain. Some functions have access restrictions and can only be called by addresses with specific roles.
+
+**NeuV2 Contract**
+
+**1. `getTraitMetadataURI()`**
+
+*   **Purpose:** Retrieves the URI for the trait metadata.
+*   **How to call:** Call this function on the deployed NeuV2 contract.
+*   **Parameters:** None.
+*   **Return Value:** `string memory uri`: The URI of the trait metadata.
+
+**2. `tokenURI(uint256 tokenId)`**
+
+*   **Purpose:** Returns the URI for the metadata of a specific NFT identified by its `tokenId`.
+*   **How to call:** Call this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint256 tokenId`: The ID of the NFT.
+*   **Return Value:** `string memory`: The URI of the NFT's metadata. Returns an empty string if the metadata retrieval fails.
+
+**3. `setMetadataContract(address newMetadataContract)`**
+
+*   **Purpose:** Sets the address of the contract that manages the token metadata.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Access Control:** Only users with the `OPERATOR_ROLE` can call this function.
+*   **Parameters:**
+    *   `address newMetadataContract`: The address of the new metadata contract.
+*   **Return Value:** None.
+
+**4. `setStorageContract(address newStorageContract)`**
+
+*   **Purpose:** Sets the address of the contract that is allowed to increase the sponsor points of tokens.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Access Control:** Only users with the `OPERATOR_ROLE` can call this function.
+*   **Parameters:**
+    *   `address newStorageContract`: The address of the new storage contract.
+*   **Return Value:** None.
+
+**5. `safeMint(address to, uint16 seriesIndex)`**
+
+*   **Purpose:** Mints a new NFT of a specific `seriesIndex` and sends it to the `to` address. The `originalPrice` for this mint is set to 0.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Access Control:** Only users with the `OPERATOR_ROLE` can call this function.
+*   **Parameters:**
+    *   `address to`: The address that will receive the newly minted NFT.
+    *   `uint16 seriesIndex`: The index of the series for the new NFT.
+*   **Return Value:** None.
+
+**6. `safeMintPublic(uint16 seriesIndex)`**
+
+*   **Purpose:** Allows anyone to mint a new NFT of a specific `seriesIndex` by sending enough ETH to cover the series' minting price. If the minted token has governance rights and the sent ETH is greater than or equal to `weiPerSponsorPoint`, sponsor points are increased.
+*   **How to call:** Send a payable transaction to this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint16 seriesIndex`: The index of the series for the new NFT.
+*   **Payable:** This function requires sending ETH.
+*   **Return Value:** None.
+
+**7. `burn(uint256 tokenId)`**
+
+*   **Purpose:** Burns (destroys) an NFT identified by its `tokenId`.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint256 tokenId`: The ID of the NFT to burn.
+*   **Return Value:** None.
+
+**8. `withdraw()`**
+
+*   **Purpose:** Allows the operator to withdraw any ETH held by the contract, excluding the total value of refundable tokens.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Access Control:** Only users with the `OPERATOR_ROLE` can call this function.
+*   **Parameters:** None.
+*   **Return Value:** None.
+
+**9. `refund(uint256 tokenId)`**
+
+*   **Purpose:** Allows the owner of a specific NFT to get a refund (the amount is determined by the metadata contract) and burn the token.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint256 tokenId`: The ID of the NFT to refund and burn.
+*   **Return Value:** None. Sends the refund amount to the caller.
+
+**10. `increaseSponsorPoints(uint256 tokenId)`**
+
+*   **Purpose:** Increases the sponsor points of a specific NFT by sending ETH to this function. The amount of sponsor points increased is determined by the `weiPerSponsorPoint` value.
+*   **How to call:** Send a payable transaction to this function on the deployed NeuV2 contract.
+*   **Access Control:** Only users with the `POINTS_INCREASER_ROLE` can call this function.
+*   **Parameters:**
+    *   `uint256 tokenId`: The ID of the NFT to increase sponsor points for.
+*   **Payable:** This function requires sending ETH.
+*   **Return Value:**
+    *   `uint256`: The new total sponsor points of the token.
+    *   `uint256`: The amount of sponsor points increased.
+
+**11. `setWeiPerSponsorPoint(uint256 newWeiPerSponsorPoint)`**
+
+*   **Purpose:** Sets the amount of wei (smallest unit of Ether) required to get one sponsor point. The value must be at least 1 gwei.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Access Control:** Only users with the `OPERATOR_ROLE` can call this function.
+*   **Parameters:**
+    *   `uint256 newWeiPerSponsorPoint`: The new amount of wei per sponsor point.
+*   **Return Value:** None.
+
+**12. `getTraitValue(uint256 tokenId, bytes32 traitKey)`**
+
+*   **Purpose:** Retrieves the value of a specific trait (`traitKey`) for a given `tokenId`.
+*   **How to call:** Call this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint256 tokenId`: The ID of the NFT.
+    *   `bytes32 traitKey`: The key of the trait to retrieve.
+*   **Return Value:** `bytes32 traitValue`: The value of the specified trait.
+
+**13. `getTraitValues(uint256 tokenId, bytes32[] calldata traitKeys)`**
+
+*   **Purpose:** Retrieves the values of multiple traits (`traitKeys`) for a given `tokenId`.
+*   **How to call:** Call this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint256 tokenId`: The ID of the NFT.
+    *   `bytes32[] calldata traitKeys`: An array of trait keys to retrieve.
+*   **Return Value:** `bytes32[] memory traitValues`: An array containing the values of the requested traits.
+
+**14. `setTraitMetadataURI(string calldata uri)`**
+
+*   **Purpose:** Sets the URI for the trait metadata.
+*   **How to call:** Send a transaction to this function on the deployed NeuV2 contract.
+*   **Access Control:** Only users with the `OPERATOR_ROLE` can call this function.
+*   **Parameters:**
+    *   `string calldata uri`: The new URI for the trait metadata.
+*   **Return Value:** None.
+
+**15. `getTokensOfOwner(address owner)`**
+
+*   **Purpose:** Returns an array of `tokenId`s owned by a specific `owner` address.
+*   **How to call:** Call this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `address owner`: The address of the NFT owner.
+*   **Return Value:** `uint256[] memory tokenIds`: An array of `tokenId`s owned by the specified address.
+
+**16. `getTokensWithData(uint256[] calldata tokenIds)`**
+
+*   **Purpose:** Returns the token URIs and a boolean indicating if each token was user-minted for an array of `tokenId`s.
+*   **How to call:** Call this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint256[] calldata tokenIds`: An array of `tokenId`s to query.
+*   **Return Value:**
+    *   `string[] memory tokenUris`: An array of metadata URIs for the given `tokenId`s.
+    *   `bool[] memory isUserMinted`: An array of booleans indicating if each corresponding token was user-minted.
+
+**17. `getTokensTraitValues(uint256[] calldata tokenIds, bytes32[] calldata traitKeys)`**
+
+*   **Purpose:** Returns a 2D array containing the trait values for a list of `tokenId`s and a list of `traitKeys`.
+*   **How to call:** Call this function on the deployed NeuV2 contract.
+*   **Parameters:**
+    *   `uint256[] calldata tokenIds`: An array of `tokenId`s to query.
+    *   `bytes32[] calldata traitKeys`: An array of trait keys to retrieve for each token.
+*   **Return Value:** `bytes32[][] memory traitValues`: A 2D array where each inner array contains the trait values for a corresponding `tokenId` and the order of values matches the order of `traitKeys`.
+
+
+**NeuStorageV2 Contract**
+
+*   **`initialize(address defaultAdmin, address upgrader, address neuContractAddress, address entitlementContractAddress)`**
+    *   **Purpose:** Initializes the contract after deployment. This function can only be called once.
+    *   **Parameters:**
+        *   `defaultAdmin` (address): The address that will be granted the default administrator role.
+        *   `upgrader` (address): The address that will be granted the upgrader role, allowing for contract upgrades.
+        *   `neuContractAddress` (address): The address of the INeuToken contract (likely NeuV2).
+        *   `entitlementContractAddress` (address): The address of the INeuEntitlementV1 contract.
+
+*   **`initializeV2(address _entitlementContractAddress)`**
+    *   **Purpose:** Initializes the contract for a version 2 upgrade. This function can only be called once after the contract has been upgraded to this version.
+    *   **Parameters:**
+        *   `_entitlementContractAddress` (address): The address of the INeuEntitlementV1 contract.
+
+*   **`saveData(uint256 tokenId, bytes memory data)`**
+    *   **Purpose:** Allows a user with the necessary entitlement to store data associated with their address.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the NEU token. Use `0` if the entitlement is granted through a token other than NEU.
+        *   `data` (bytes): The data to be stored.
+    *   **Payable:** This function is payable. If Ether (`msg.value`) is sent and the caller owns the specified `tokenId` (and `tokenId` is not 0), the sponsor points of that token will be increased by calling the `increaseSponsorPoints` function on the `_neuContract`.
+    *   **Restrictions:** The caller must have entitlement as determined by the `hasEntitlement` function of the `_entitlementContract`.
+
+*   **`retrieveData(address owner)`**
+    *   **Purpose:** Allows anyone to retrieve the data associated with a specific Ethereum address.
+    *   **Parameters:**
+        *   `owner` (address): The Ethereum address whose data is being requested.
+    *   **Return Value:** `bytes memory`: The data stored for the given `owner`.
+
+**NeuEntitlementV1 Contract**
+
+*   **`initialize(address defaultAdmin, address upgrader, address operator, address neuContract)`**
+    *   **Purpose:** Initializes the contract after deployment. This function can only be called once.
+    *   **Parameters:**
+        *   `defaultAdmin` (address): The address that will be granted the default administrator role.
+        *   `upgrader` (address): The address that will be granted the upgrader role, allowing for contract upgrades.
+        *   `operator` (address): The address that will be granted the operator role, allowing for management of entitlement contracts.
+        *   `neuContract` (address): The address of the NEU token contract, which will be added as an initial entitlement contract.
+
+*   **`addEntitlementContract(address entitlementContract)`**
+    *   **Purpose:** Allows an operator to add a new contract to the list of contracts whose token holders are considered entitled.
+    *   **Parameters:**
+        *   `entitlementContract` (address): The address of the contract to be added. This contract must support the `balanceOf(address)` function from the `IERC721` interface.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It also checks if the contract has already been added and if it supports `balanceOf()`.
+
+*   **`removeEntitlementContract(address entitlementContract)`**
+    *   **Purpose:** Allows an operator to remove a contract from the list of entitlement contracts.
+    *   **Parameters:*CONTRACTS.txt
+
+This document describes how to call the external functions of the Neu Storage V2, NeuEntitlementV1, and NeuMetadataV2 smart contracts. Please note that you need an Ethereum wallet and likely an interface to interact with these functions on the blockchain. Some functions have access restrictions and can only be called by addresses with specific roles.
+
+**NeuStorageV2 Contract**
+
+*   **`initialize(address defaultAdmin, address upgrader, address neuContractAddress, address entitlementContractAddress)`**
+    *   **Purpose:** Initializes the contract after deployment. This function can only be called once.
+    *   **Parameters:**
+        *   `defaultAdmin` (address): The address that will be granted the default administrator role.
+        *   `upgrader` (address): The address that will be granted the upgrader role, allowing for contract upgrades.
+        *   `neuContractAddress` (address): The address of the INeuToken contract (likely NeuV2).
+        *   `entitlementContractAddress` (address): The address of the INeuEntitlementV1 contract.
+
+*   **`initializeV2(address _entitlementContractAddress)`**
+    *   **Purpose:** Initializes the contract for a version 2 upgrade. This function can only be called once after the contract has been upgraded to this version.
+    *   **Parameters:**
+        *   `_entitlementContractAddress` (address): The address of the INeuEntitlementV1 contract.
+
+*   **`saveData(uint256 tokenId, bytes memory data)`**
+    *   **Purpose:** Allows a user with the necessary entitlement to store data associated with their address.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the NEU token. Use `0` if the entitlement is granted through a token other than NEU.
+        *   `data` (bytes): The data to be stored.
+    *   **Payable:** This function is payable. If Ether (`msg.value`) is sent and the caller owns the specified `tokenId` (and `tokenId` is not 0), the sponsor points of that token will be increased by calling the `increaseSponsorPoints` function on the `_neuContract`.
+    *   **Restrictions:** The caller must have entitlement as determined by the `hasEntitlement` function of the `_entitlementContract`.
+
+*   **`retrieveData(address owner)`**
+    *   **Purpose:** Allows anyone to retrieve the data associated with a specific Ethereum address.
+    *   **Parameters:**
+        *   `owner` (address): The Ethereum address whose data is being requested.
+    *   **Return Value:** `bytes memory`: The data stored for the given `owner`.
+
+**NeuEntitlementV1 Contract**
+
+*   **`initialize(address defaultAdmin, address upgrader, address operator, address neuContract)`**
+    *   **Purpose:** Initializes the contract after deployment. This function can only be called once.
+    *   **Parameters:**
+        *   `defaultAdmin` (address): The address that will be granted the default administrator role.
+        *   `upgrader` (address): The address that will be granted the upgrader role, allowing for contract upgrades.
+        *   `operator` (address): The address that will be granted the operator role, allowing for management of entitlement contracts.
+        *   `neuContract` (address): The address of the NEU token contract, which will be added as an initial entitlement contract.
+
+*   **`addEntitlementContract(address entitlementContract)`**
+    *   **Purpose:** Allows an operator to add a new contract to the list of contracts whose token holders are considered entitled.
+    *   **Parameters:**
+        *   `entitlementContract` (address): The address of the contract to be added. This contract must support the `balanceOf(address)` function from the `IERC721` interface.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It also checks if the contract has already been added and if it supports `balanceOf()`.
+
+*   **`removeEntitlementContract(address entitlementContract)`**
+    *   **Purpose:** Allows an operator to remove a contract from the list of entitlement contracts.
+    *   **Parameters:**
+        *   `entitlementContract` (address): The address of the contract to be removed.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It checks if the provided address is in the list of entitlement contracts.
+
+*   **`hasEntitlement(address user)`**
+    *   **Purpose:** Checks if a given Ethereum address has entitlement. Entitlement is granted if the user holds a balance greater than zero in any of the registered entitlement contracts.
+    *   **Parameters:**
+        *   `user` (address): The Ethereum address to check for entitlement.
+    *   **Return Value:** `bool`: Returns `true` if the user has entitlement, `false` otherwise.
+
+*   **`userEntitlementContracts(address user)`**
+    *   **Purpose:** Returns a list of addresses of the entitlement contracts in which a given user holds a balance greater than zero.
+    *   **Parameters:**
+        *   `user` (address): The Ethereum address to query.
+    *   **Return Value:** `address[] memory`: An array of addresses of the entitlement contracts where the user has a balance.
+
+**NeuMetadataV2 Contract**
+
+*   **`initialize(address defaultAdmin, address upgrader, address operator, address neuContract, address logoContract)`**
+    *   **Purpose:** Initializes the contract after deployment. This function can only be called once.
+    *   **Parameters:**
+        *   `defaultAdmin` (address): The address that will be granted the default administrator role.
+        *   `upgrader` (address): The address that will be granted the upgrader role, allowing for contract upgrades.
+        *   `operator` (address): The address that will be granted the operator role, allowing for administrative tasks like managing series and the logo contract.
+        *   `neuContract` (address): The address of the NEU token contract, which will be granted the `NEU_ROLE`.
+        *   `logoContract` (address): The address of the NeuLogoV2 contract used for generating token logos.
+
+*   **`createTokenMetadata(uint16 seriesIndex, uint256 originalPrice)`**
+    *   **Purpose:** Creates metadata for a new NEU token. This function is typically called when a new token is minted.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the token series to which the new token belongs.
+        *   `originalPrice` (uint256): The original price of the token in wei.
+    *   **Return Values:**
+        *   `tokenId` (uint256): The ID of the newly created token.
+        *   `governance` (bool): Indicates whether the token grants governance access based on the series name.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.
+
+*   **`deleteTokenMetadata(uint256 tokenId)`**
+    *   **Purpose:** Deletes the metadata associated with a specific NEU token. This is typically called when a token is burned.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token whose metadata should be deleted.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.
+
+*   **`setTraitMetadataURI(string calldata uri)`**
+    *   **Purpose:** Sets the URI for the trait metadata.
+    *   **Parameters:**
+        *   `uri` (string calldata): The new URI for the trait metadata.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.
+
+*   **`tokenURI(uint256 tokenId)`**
+    *   **Purpose:** Returns the URI for the metadata of a specific NEU token, conforming to the ERC721 metadata standard.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+    *   **Return Value:** `string memory`: The JSON metadata URI for the token, encoded as a data URI.
+
+*   **`isUserMinted(uint256 tokenId)`**
+    *   **Purpose:** Checks if a specific NEU token was user-minted (i.e., had an original price greater than 0).
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+    *   **Return Value:** `bool`: Returns `true` if the token's original price was greater than 0, `false` otherwise.
+
+*   **`getTraitValue(uint256 tokenId, bytes32 traitKey)`**
+    *   **Purpose:** Retrieves the value of a specific trait for a given NEU token. Currently, only the "points" trait (sponsor points) is supported.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+        *   `traitKey` (bytes32): The key of the trait to retrieve (e.g., `keccak256("points")`).
+    *   **Return Value:** `bytes32`: The value of the specified trait. Reverts if the trait key is not found.
+
+*   **`getTraitValues(uint256 tokenId, bytes32[] calldata traitKeys)`**
+    *   **Purpose:** Retrieves the values of multiple traits for a given NEU token.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+        *   `traitKeys` (bytes32[] calldata): An array of trait keys to retrieve.
+    *   **Return Value:** `bytes32[] memory`: An array of the corresponding trait values. Reverts if any of the trait keys are not found.
+
+*   **`getTraitMetadataURI()`**
+    *   **Purpose:** Returns the URI for the trait metadata.
+    *   **Return Value:** `string memory`: The trait metadata URI.
+
+*   **`addSeries(bytes8 name, uint64 priceInGwei, uint32 firstToken, uint32 maxTokens, uint16 fgColorRGB565, uint16 bgColorRGB565, uint16 accentColorRGB565, bool makeAvailable)`**
+    *   **Purpose:** Adds a new series of NEU tokens.
+    *   **Parameters:**
+        *   `name` (bytes8): The name of the series (up to 8 bytes).
+        *   `priceInGwei` (uint64): The price of tokens in this series in Gwei for public minting.
+        *   `firstToken` (uint32): The ID of the first token in this series.
+        *   `maxTokens` (uint32): The maximum number of tokens in this series.
+        *   `fgColorRGB565` (uint16): The foreground color in RGB565 format.
+        *   `bgColorRGB565` (uint16): The background color in RGB565 format.
+        *   `accentColorRGB565` (uint16): The accent color in RGB565 format.
+        *   `makeAvailable` (bool): Whether to make this series available for public minting immediately.
+    *   **Return Value:** `uint16`: The index of the newly created series.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It also checks for duplicate series names and overlapping token ID ranges.
+
+*   **`getSeries(uint16 seriesIndex)`**
+    *   **Purpose:** Retrieves information about a specific token series.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+    *   **Return Values:**
+        *   `name` (bytes8): The name of the series.
+        *   `priceInGwei` (uint256): The price of tokens in this series in Gwei for public minting.
+        *   `firstToken` (uint256): The ID of the first token in this series.
+        *   `maxTokens` (uint256): The maximum number of tokens in this series.
+        *   `mintedTokens` (uint256): The number of tokens minted in this series.
+        *   `burntTokens` (uint256): The number of tokens burnt in this series.
+        *   `isAvailable` (bool): Whether the series is currently available for public minting.
+        *   `logoSvg` (string memory): A base64 encoded SVG of the series logo.
+
+*   **`isSeriesAvailable(uint16 seriesIndex)`**
+    *   **Purpose:** Checks if a specific token series is currently available for public minting.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+    *   **Return Value:** `bool`: `true` if the series is available, `false` otherwise.
+
+*   **`setSeriesAvailability(uint16 seriesIndex, bool available)`**
+    *   **Purpose:** Sets the availability of a token series for public minting.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+        *   `available` (bool): `true` to make the series available, `false` to make it unavailable.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It prevents making a fully minted series available.
+
+*   **`getAvailableSeries()`**
+    *   **Purpose:** Returns a list of indices of the token series that are currently available for public minting.
+    *   **Return Value:** `uint16[] memory`: An array of available series indices.
+
+*   **`setPriceInGwei(uint16 seriesIndex, uint64 price)`**
+    *   **Purpose:** Sets the public minting price (in Gwei) for a specific token series.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+        *   `price` (uint64): The new price in Gwei.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function.
+
+*   **`getSeriesMintingPrice(uint16 seriesIndex)`**
+    *   **Purpose:** Returns the current public minting price (in wei) for a specific token series.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+    *   **Return Value:** `uint256`: The minting price in wei. Reverts if the series is not available for public minting.
+
+*   **`sumAllRefundableTokensValue()`**
+    *   **Purpose:** Calculates the total value of all tokens that are currently within their refund window.
+    *   **Return Value:** `uint256`: The total value in wei.
+
+*   **`getRefundAmount(uint256 tokenId)`**
+    *   **Purpose:** Returns the refund amount for a specific token, if it is within the refund window.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+    *   **Return Value:** `uint256`: The refund amount in wei. Reverts if the token is not refundable or the refund window has passed.
+
+*   **`setLogoContract(address logoContract)`**
+    *   **Purpose:** Sets the address of the NeuLogoV2 contract used for generating token logos.
+    *   **Parameters:**
+        *   `logoContract` (address): The address of the new NeuLogoV2 contract.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function.
+
+*   **`increaseSponsorPoints(uint256 tokenId, uint256 sponsorPointsIncrease)`**
+    *   **Purpose:** Increases the sponsor points of a specific NEU token.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+        *   `sponsorPointsIncrease` (uint256): The number of sponsor points to increase.
+    *   **Return Value:** `uint256`: The new total sponsor points of the token.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.*
+        *   `entitlementContract` (address): The address of the contract to be removed.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It checks if the provided address is in the list of entitlement contracts.
+
+*   **`hasEntitlement(address user)`**
+    *   **Purpose:** Checks if a given Ethereum address has entitlement. Entitlement is granted if the user holds a balance greater than zero in any of the registered entitlement contracts.
+    *   **Parameters:**
+        *   `user` (address): The Ethereum address to check for entitlement.
+    *   **Return Value:** `bool`: Returns `true` if the user has entitlement, `false` otherwise.
+
+*   **`userEntitlementContracts(address user)`**
+    *   **Purpose:** Returns a list of addresses of the entitlement contracts in which a given user holds a balance greater than zero.
+    *   **Parameters:**
+        *   `user` (address): The Ethereum address to query.
+    *   **Return Value:** `address[] memory`: An array of addresses of the entitlement contracts where the user has a balance.
+
+**NeuMetadataV2 Contract**
+
+*   **`initialize(address defaultAdmin, address upgrader, address operator, address neuContract, address logoContract)`**
+    *   **Purpose:** Initializes the contract after deployment. This function can only be called once.
+    *   **Parameters:**
+        *   `defaultAdmin` (address): The address that will be granted the default administrator role.
+        *   `upgrader` (address): The address that will be granted the upgrader role, allowing for contract upgrades.
+        *   `operator` (address): The address that will be granted the operator role, allowing for administrative tasks like managing series and the logo contract.
+        *   `neuContract` (address): The address of the NEU token contract, which will be granted the `NEU_ROLE`.
+        *   `logoContract` (address): The address of the NeuLogoV2 contract used for generating token logos.
+
+*   **`createTokenMetadata(uint16 seriesIndex, uint256 originalPrice)`**
+    *   **Purpose:** Creates metadata for a new NEU token. This function is typically called when a new token is minted.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the token series to which the new token belongs.
+        *   `originalPrice` (uint256): The original price of the token in wei.
+    *   **Return Values:**
+        *   `tokenId` (uint256): The ID of the newly created token.
+        *   `governance` (bool): Indicates whether the token grants governance access based on the series name.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.
+
+*   **`deleteTokenMetadata(uint256 tokenId)`**
+    *   **Purpose:** Deletes the metadata associated with a specific NEU token. This is typically called when a token is burned.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token whose metadata should be deleted.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.
+
+*   **`setTraitMetadataURI(string calldata uri)`**
+    *   **Purpose:** Sets the URI for the trait metadata.
+    *   **Parameters:**
+        *   `uri` (string calldata): The new URI for the trait metadata.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.
+
+*   **`tokenURI(uint256 tokenId)`**
+    *   **Purpose:** Returns the URI for the metadata of a specific NEU token, conforming to the ERC721 metadata standard.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+    *   **Return Value:** `string memory`: The JSON metadata URI for the token, encoded as a data URI.
+
+*   **`isUserMinted(uint256 tokenId)`**
+    *   **Purpose:** Checks if a specific NEU token was user-minted (i.e., had an original price greater than 0).
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+    *   **Return Value:** `bool`: Returns `true` if the token's original price was greater than 0, `false` otherwise.
+
+*   **`getTraitValue(uint256 tokenId, bytes32 traitKey)`**
+    *   **Purpose:** Retrieves the value of a specific trait for a given NEU token. Currently, only the "points" trait (sponsor points) is supported.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+        *   `traitKey` (bytes32): The key of the trait to retrieve (e.g., `keccak256("points")`).
+    *   **Return Value:** `bytes32`: The value of the specified trait. Reverts if the trait key is not found.
+
+*   **`getTraitValues(uint256 tokenId, bytes32[] calldata traitKeys)`**
+    *   **Purpose:** Retrieves the values of multiple traits for a given NEU token.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+        *   `traitKeys` (bytes32[] calldata): An array of trait keys to retrieve.
+    *   **Return Value:** `bytes32[] memory`: An array of the corresponding trait values. Reverts if any of the trait keys are not found.
+
+*   **`getTraitMetadataURI()`**
+    *   **Purpose:** Returns the URI for the trait metadata.
+    *   **Return Value:** `string memory`: The trait metadata URI.
+
+*   **`addSeries(bytes8 name, uint64 priceInGwei, uint32 firstToken, uint32 maxTokens, uint16 fgColorRGB565, uint16 bgColorRGB565, uint16 accentColorRGB565, bool makeAvailable)`**
+    *   **Purpose:** Adds a new series of NEU tokens.
+    *   **Parameters:**
+        *   `name` (bytes8): The name of the series (up to 8 bytes).
+        *   `priceInGwei` (uint64): The price of tokens in this series in Gwei for public minting.
+        *   `firstToken` (uint32): The ID of the first token in this series.
+        *   `maxTokens` (uint32): The maximum number of tokens in this series.
+        *   `fgColorRGB565` (uint16): The foreground color in RGB565 format.
+        *   `bgColorRGB565` (uint16): The background color in RGB565 format.
+        *   `accentColorRGB565` (uint16): The accent color in RGB565 format.
+        *   `makeAvailable` (bool): Whether to make this series available for public minting immediately.
+    *   **Return Value:** `uint16`: The index of the newly created series.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It also checks for duplicate series names and overlapping token ID ranges.
+
+*   **`getSeries(uint16 seriesIndex)`**
+    *   **Purpose:** Retrieves information about a specific token series.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+    *   **Return Values:**
+        *   `name` (bytes8): The name of the series.
+        *   `priceInGwei` (uint256): The price of tokens in this series in Gwei for public minting.
+        *   `firstToken` (uint256): The ID of the first token in this series.
+        *   `maxTokens` (uint256): The maximum number of tokens in this series.
+        *   `mintedTokens` (uint256): The number of tokens minted in this series.
+        *   `burntTokens` (uint256): The number of tokens burnt in this series.
+        *   `isAvailable` (bool): Whether the series is currently available for public minting.
+        *   `logoSvg` (string memory): A base64 encoded SVG of the series logo.
+
+*   **`isSeriesAvailable(uint16 seriesIndex)`**
+    *   **Purpose:** Checks if a specific token series is currently available for public minting.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+    *   **Return Value:** `bool`: `true` if the series is available, `false` otherwise.
+
+*   **`setSeriesAvailability(uint16 seriesIndex, bool available)`**
+    *   **Purpose:** Sets the availability of a token series for public minting.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+        *   `available` (bool): `true` to make the series available, `false` to make it unavailable.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function. It prevents making a fully minted series available.
+
+*   **`getAvailableSeries()`**
+    *   **Purpose:** Returns a list of indices of the token series that are currently available for public minting.
+    *   **Return Value:** `uint16[] memory`: An array of available series indices.
+
+*   **`setPriceInGwei(uint16 seriesIndex, uint64 price)`**
+    *   **Purpose:** Sets the public minting price (in Gwei) for a specific token series.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+        *   `price` (uint64): The new price in Gwei.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function.
+
+*   **`getSeriesMintingPrice(uint16 seriesIndex)`**
+    *   **Purpose:** Returns the current public minting price (in wei) for a specific token series.
+    *   **Parameters:**
+        *   `seriesIndex` (uint16): The index of the series.
+    *   **Return Value:** `uint256`: The minting price in wei. Reverts if the series is not available for public minting.
+
+*   **`sumAllRefundableTokensValue()`**
+    *   **Purpose:** Calculates the total value of all tokens that are currently within their refund window.
+    *   **Return Value:** `uint256`: The total value in wei.
+
+*   **`getRefundAmount(uint256 tokenId)`**
+    *   **Purpose:** Returns the refund amount for a specific token, if it is within the refund window.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+    *   **Return Value:** `uint256`: The refund amount in wei. Reverts if the token is not refundable or the refund window has passed.
+
+*   **`setLogoContract(address logoContract)`**
+    *   **Purpose:** Sets the address of the NeuLogoV2 contract used for generating token logos.
+    *   **Parameters:**
+        *   `logoContract` (address): The address of the new NeuLogoV2 contract.
+    *   **Restrictions:** Only addresses with the `OPERATOR_ROLE` can call this function.
+
+*   **`increaseSponsorPoints(uint256 tokenId, uint256 sponsorPointsIncrease)`**
+    *   **Purpose:** Increases the sponsor points of a specific NEU token.
+    *   **Parameters:**
+        *   `tokenId` (uint256): The ID of the token.
+        *   `sponsorPointsIncrease` (uint256): The number of sponsor points to increase.
+    *   **Return Value:** `uint256`: The new total sponsor points of the token.
+    *   **Restrictions:** Only addresses with the `NEU_ROLE` can call this function.
