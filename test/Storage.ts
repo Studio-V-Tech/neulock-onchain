@@ -57,6 +57,12 @@ describe("Storage", function () {
       expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[0]);
     });
 
+    it("Reverts if caller does not own called NEU, has entitlement, but sends ether", async function () {
+      const { callStorageAs, user } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callStorageAs(user).saveData(2n, userDataBytesArray[0], { value: (10n ** 14n)})).to.be.revertedWith("Cannot add points to unowned NEU");
+    });
+
     it("Reverts on saving data if caller does not own called NEU and does not have entitlement", async function () {
       const { callStorageAs, upgrader } = await loadFixture(purchasedTokensFixture);
 

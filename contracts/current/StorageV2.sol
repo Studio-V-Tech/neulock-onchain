@@ -54,12 +54,13 @@ contract NeuStorageV2 is
     function saveData(uint256 tokenId, bytes memory data) external payable {
         // Call with tokenId = 0 if entitlement by token other than the NEU
         require(_entitlementContract.hasEntitlement(msg.sender), "Caller does not have entitlement");
-
-        if (msg.value > 0 && _neuContract.ownerOf(tokenId) == msg.sender) {
-            _neuContract.increaseSponsorPoints{value: msg.value}(tokenId);
-        }
+        require(msg.value == 0 || _neuContract.ownerOf(tokenId) == msg.sender, "Cannot add points to unowned NEU");
 
         _userdata[msg.sender] = data;
+
+        if (msg.value > 0) {
+            _neuContract.increaseSponsorPoints{value: msg.value}(tokenId);
+        }
     }
 
     function retrieveData(address owner) external view returns (bytes memory) {
