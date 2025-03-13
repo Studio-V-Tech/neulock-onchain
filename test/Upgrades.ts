@@ -23,40 +23,49 @@ describe("Upgrades", function () {
       expect(await storageV2.getAddress()).to.be.properAddress;
     });
 
-    it("Reverts on entitled user saving data while calling with non-owned NEU on V1", async function () {
-      const { callStorageAs, user } = await loadFixture(deployContractsV1Fixture);
+    it("Reverts on running reinitialize function on V2 again", async function () {
+      const { upgrader, user, storageV2, callStorageV2As, entitlementV1 } = await loadFixture(upgradeToStorageV2Fixture);
 
-      await expect(callStorageAs(user).saveData(0n, userDataBytesArray[5])).to.be.reverted;
+      const entitlementAddress = await entitlementV1.getAddress();
+
+      await expect(callStorageV2As(upgrader).initializeV2(entitlementAddress as `0x${string}`)).to.be.revertedWithCustomError(storageV2, 'InvalidInitialization');
+      await expect(callStorageV2As(user).initializeV2(entitlementAddress as `0x${string}`)).to.be.revertedWithCustomError(storageV2, 'InvalidInitialization');
+    });
+
+    it("Reverts on entitled user saving data while calling with non-owned NEU on V1", async function () {
+      const { callStorageV1As, user } = await loadFixture(deployContractsV1Fixture);
+
+      await expect(callStorageV1As(user).saveData(0n, userDataBytesArray[5])).to.be.reverted;
     });
 
     it("Does not revert on entitled user saving data while calling with non-owned NEU on V2", async function () {
-      const { callStorageAs, user } = await loadFixture(upgradeToStorageV2Fixture);
+      const { callStorageV2As, user } = await loadFixture(upgradeToStorageV2Fixture);
 
-      await expect(callStorageAs(user).saveData(0n, userDataBytesArray[5])).not.to.be.reverted;
+      await expect(callStorageV2As(user).saveData(0n, userDataBytesArray[5])).not.to.be.reverted;
     });
 
     it("Retrieves data correctly after upgrade", async function () {
-      const { callStorageAs, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV2Fixture);
+      const { callStorageV2As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV2Fixture);
 
-      expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[1]);
-      expect(await callStorageAs(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
-      expect(await callStorageAs(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[3]);
-      expect(await callStorageAs(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
-      expect(await callStorageAs(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+      expect(await callStorageV2As(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[1]);
+      expect(await callStorageV2As(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
+      expect(await callStorageV2As(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[3]);
+      expect(await callStorageV2As(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
+      expect(await callStorageV2As(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[5]);
     });
 
     it("Updates data correctly after upgrade", async function () {
-      const { callStorageAs, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV2Fixture);
+      const { callStorageV2As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV2Fixture);
 
-      await expect(callStorageAs(user).saveData(100001n, userDataBytesArray[5])).not.to.be.reverted;
-      await expect(callStorageAs(user3).saveData(0n, userDataBytesArray[1])).not.to.be.reverted;
-      await expect(callStorageAs(user5).saveData(100001n, userDataBytesArray[3])).not.to.be.reverted;
+      await expect(callStorageV2As(user).saveData(100001n, userDataBytesArray[5])).not.to.be.reverted;
+      await expect(callStorageV2As(user3).saveData(0n, userDataBytesArray[1])).not.to.be.reverted;
+      await expect(callStorageV2As(user5).saveData(100001n, userDataBytesArray[3])).not.to.be.reverted;
 
-      expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
-      expect(await callStorageAs(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
-      expect(await callStorageAs(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[1]);
-      expect(await callStorageAs(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
-      expect(await callStorageAs(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[3]);
+      expect(await callStorageV2As(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+      expect(await callStorageV2As(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
+      expect(await callStorageV2As(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[1]);
+      expect(await callStorageV2As(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
+      expect(await callStorageV2As(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[3]);
     });
   });
 });

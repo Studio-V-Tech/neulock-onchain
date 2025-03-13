@@ -47,9 +47,7 @@ contract NeuStorageV2 is
         _entitlementContract = INeuEntitlementV1(entitlementContractAddress);
     }
 
-    function initializeV2(
-        address _entitlementContractAddress
-    ) public reinitializer(2) {
+    function initializeV2(address _entitlementContractAddress) public reinitializer(2) {
         _entitlementContract = INeuEntitlementV1(_entitlementContractAddress);
     }
 
