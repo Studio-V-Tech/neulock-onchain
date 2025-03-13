@@ -134,6 +134,7 @@ contract NeuV2 is
             _neuMetadata.sumAllRefundableTokensValue();
 
         if (availableBalance > 0) {
+            // slither-disable-next-line arbitrary-send-eth (msg.sender is operator, guaranteed by onlyRole check)
             payable(msg.sender).transfer(availableBalance);
         }
     }
