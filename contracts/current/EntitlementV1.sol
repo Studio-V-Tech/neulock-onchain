@@ -46,6 +46,7 @@ contract NeuEntitlementV1 is
         }
 
         // We won't check for the IERC721 interface, since any token that supports balanceOf() can be used
+        // slither-disable-next-line unused-return (we don't need the return value, only to check if the function exists)
         try IERC721(entitlementContract).balanceOf(address(this)) {} catch {
             revert("Contract does not support balanceOf()");
         }

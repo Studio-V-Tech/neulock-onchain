@@ -59,6 +59,7 @@ contract NeuStorageV2 is
         _userdata[msg.sender] = data;
 
         if (msg.value > 0) {
+            // slither-disable-next-line unused-return (we make this call only for the side effect)
             _neuContract.increaseSponsorPoints{value: msg.value}(tokenId);
         }
     }
