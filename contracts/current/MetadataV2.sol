@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {IERC7496} from "../interfaces/IERC7496.sol";
 import {INeuMetadataV1} from "../interfaces/INeuMetadataV1.sol";
@@ -14,6 +15,7 @@ import {Bytes8Utils} from "../lib/Utils.sol";
 
 using Bytes8Utils for bytes8;
 using Strings for uint256;
+using SafeCast for uint256;
 
 struct Series {
     bytes8 name;
@@ -288,7 +290,7 @@ contract NeuMetadataV2 is
 
         _tokenMetadata[tokenId] = TokenMetadata({
             originalPriceInGwei: metadata.originalPriceInGwei,
-            sponsorPoints: uint64(newSponsorPoints),
+            sponsorPoints: newSponsorPoints.toUint64(),
             mintedAt: metadata.mintedAt
         });
 
