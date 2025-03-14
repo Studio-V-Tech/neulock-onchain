@@ -58,6 +58,7 @@ contract NeuEntitlementV1 is
         for (uint256 i = 0; i < entitlementContracts.length; i++) {
             if (entitlementContracts[i] == entitlementContract) {
                 entitlementContracts[i] = entitlementContracts[entitlementContracts.length - 1];
+                // slither-disable-next-line costly-loop (we only pop once and return)
                 entitlementContracts.pop();
                 return;
             }
