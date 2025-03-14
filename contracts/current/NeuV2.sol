@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Burnab
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721RoyaltyUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {IERC7496} from "../interfaces/IERC7496.sol";
 import {INeuMetadataV1} from "../interfaces/INeuMetadataV1.sol";
@@ -24,7 +25,8 @@ contract NeuV2 is
     AccessControlUpgradeable,
     ERC721BurnableUpgradeable,
     ERC721RoyaltyUpgradeable,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -48,6 +50,7 @@ contract NeuV2 is
         __AccessControl_init();
         __ERC721Burnable_init();
         __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(UPGRADER_ROLE, upgrader);
@@ -56,6 +59,10 @@ contract NeuV2 is
         _setDefaultRoyalty(address(this), 1000); // 10%
 
         weiPerSponsorPoint = 1e14; // 0.0001 ETH
+    }
+
+    function initializeV2() public reinitializer(2) {
+        __ReentrancyGuard_init();
     }
 
     function getTraitMetadataURI()
@@ -68,8 +75,8 @@ contract NeuV2 is
     }
 
     function _setTraitMetadataURI(string calldata uri) private {
-        _neuMetadata.setTraitMetadataURI(uri);
         emit IERC7496.TraitMetadataURIUpdated();
+        _neuMetadata.setTraitMetadataURI(uri);
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -155,7 +162,7 @@ contract NeuV2 is
         return _increaseSponsorPoints(tokenId, msg.value);
     }
 
-    function _increaseSponsorPoints(uint256 tokenId, uint256 value) private returns (uint256, uint256) {
+    function _increaseSponsorPoints(uint256 tokenId, uint256 value) private nonReentrant() returns (uint256, uint256) {
         uint256 sponsorPointsIncrease = value / weiPerSponsorPoint;
 
         if (sponsorPointsIncrease == 0) {
