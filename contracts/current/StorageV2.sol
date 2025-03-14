@@ -47,8 +47,8 @@ contract NeuStorageV2 is
         _entitlementContract = INeuEntitlementV1(entitlementContractAddress);
     }
 
-    function initializeV2(address _entitlementContractAddress) public reinitializer(2) {
-        _entitlementContract = INeuEntitlementV1(_entitlementContractAddress);
+    function initializeV2(address entitlementContractAddress) public reinitializer(2) {
+        _entitlementContract = INeuEntitlementV1(entitlementContractAddress);
     }
 
     function saveData(uint256 tokenId, bytes memory data) external payable {
