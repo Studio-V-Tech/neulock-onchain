@@ -150,8 +150,9 @@ contract NeuMetadataV2 is
     function addSeries(bytes8 name, uint64 priceInGwei, uint32 firstToken, uint32 maxTokens, uint16 fgColorRGB565, uint16 bgColorRGB565, uint16 accentColorRGB565, bool makeAvailable) external onlyRole(OPERATOR_ROLE) returns (uint16) {
         uint16 seriesIndex = uint16(_series.length);
         uint256 maxToken = firstToken + maxTokens - 1;
+        uint256 seriesLength = _series.length;
 
-        for (uint16 i = 0; i < _series.length; i++) {
+        for (uint16 i = 0; i < seriesLength; i++) {
             require(_series[i].name != name, "Series name already exists");
             require(maxToken < _series[i].firstToken || firstToken >= _series[i].firstToken + _series[i].maxTokens, "Series overlaps with existing");
         }
@@ -241,8 +242,9 @@ contract NeuMetadataV2 is
 
     function sumAllRefundableTokensValue() external view returns (uint256) {
         uint256 totalValue = 0;
+        uint256 seriesLength = _series.length;
 
-        for (uint16 s = 0; s < _series.length; s++) {
+        for (uint16 s = 0; s < seriesLength; s++) {
             for (uint256 i = _series[s].firstToken + _series[s].mintedTokens - 1; i >= _series[s].firstToken; i--) {
                 TokenMetadata memory metadata = _tokenMetadata[i];
 
@@ -301,7 +303,9 @@ contract NeuMetadataV2 is
     }
 
     function _isSeriesAvailable(uint16 seriesIndex) private view returns (bool) {
-        for (uint256 i = 0; i < _availableSeries.length; i++) {
+        uint256 availableSeriesLength = _availableSeries.length;
+
+        for (uint256 i = 0; i < availableSeriesLength; i++) {
             if (_availableSeries[i] == seriesIndex) {
                 return true;
             }
@@ -358,7 +362,9 @@ contract NeuMetadataV2 is
     }
 
     function _seriesOfToken(uint256 tokenId) private view returns (uint16) {
-        for (uint16 i = 0; i < _series.length; i++) {
+        uint256 seriesLength = _series.length;
+
+        for (uint16 i = 0; i < seriesLength; i++) {
             if (tokenId >= _series[i].firstToken && tokenId < _series[i].firstToken + _series[i].maxTokens) {
                 return i;
             }

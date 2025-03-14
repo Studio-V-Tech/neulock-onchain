@@ -41,7 +41,9 @@ contract NeuEntitlementV1 is
     }
 
     function addEntitlementContract(address entitlementContract) external onlyRole(OPERATOR_ROLE) override {
-        for (uint256 i = 0; i < entitlementContracts.length; i++) {
+        uint256 entitlementContractsLength = entitlementContracts.length;
+
+        for (uint256 i = 0; i < entitlementContractsLength; i++) {
             require(entitlementContracts[i] != entitlementContract, "Entitlement contract already added");
         }
 
@@ -68,7 +70,9 @@ contract NeuEntitlementV1 is
     }
 
     function hasEntitlement(address user) external view override returns (bool) {
-        for (uint256 i = 0; i < entitlementContracts.length; i++) {
+        uint256 entitlementContractsLength = entitlementContracts.length;
+
+        for (uint256 i = 0; i < entitlementContractsLength; i++) {
             IERC721 entitlementContract = IERC721(entitlementContracts[i]);
 
             if (_callerHasContractEntitlement(user, entitlementContract)) {
@@ -83,7 +87,9 @@ contract NeuEntitlementV1 is
         address[] memory userEntitlements = new address[](entitlementContracts.length);
         uint256 count = 0;
 
-        for (uint256 i = 0; i < entitlementContracts.length; i++) {
+        uint256 entitlementContractsLength = entitlementContracts.length;
+
+        for (uint256 i = 0; i < entitlementContractsLength; i++) {
             IERC721 entitlementContract = IERC721(entitlementContracts[i]);
 
             if (_callerHasContractEntitlement(user, entitlementContract)) {
