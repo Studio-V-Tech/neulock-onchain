@@ -121,6 +121,7 @@ contract NeuMetadataV2 is
     }
 
     function isUserMinted(uint256 tokenId) external view returns (bool) {
+        // slither-disable-next-line timestamp (block miner cannot set timestamp in the past of previous block, so mintedAt == 0 can only mean the token does not exist)
         return _metadataExists(tokenId) && _tokenMetadata[tokenId].originalPriceInGwei > 0;
     }
 
@@ -250,6 +251,7 @@ contract NeuMetadataV2 is
                     continue;
                 }
 
+                // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
                 if (block.timestamp - metadata.mintedAt > REFUND_WINDOW) {
                     // All tokens before this one in the series are also expired
                     break;
@@ -266,6 +268,7 @@ contract NeuMetadataV2 is
         TokenMetadata memory metadata = _tokenMetadata[tokenId];
 
         require(metadata.originalPriceInGwei > 0, "Token is not refundable");
+        // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
         require(block.timestamp - metadata.mintedAt < REFUND_WINDOW, "Refund window has passed");
 
         return metadata.originalPriceInGwei * 1e9;
@@ -385,6 +388,7 @@ contract NeuMetadataV2 is
     }
 
     function _metadataExists(uint256 tokenId) private view returns (bool) {
+        // slither-disable-next-line timestamp (block miner cannot set timestamp in the past of previous block, so mintedAt == 0 can only mean the token does not exist)
         return _tokenMetadata[tokenId].mintedAt != 0;
     }
 
