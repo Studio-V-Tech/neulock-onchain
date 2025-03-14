@@ -75,11 +75,13 @@ contract NeuV2 is
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         _requireOwned(tokenId);
 
+        // slither-disable-start calls-loop (try-catch mitigates the DoS risk on revert)
         try _neuMetadata.tokenURI(tokenId) returns (string memory result) {
             return result;
         } catch {
             return "";
         }
+        // slither-disable-end calls-loop
     }
 
     function setMetadataContract(
@@ -196,6 +198,7 @@ contract NeuV2 is
     ) public view virtual override returns (bytes32[] memory traitValues) {
         _requireOwned(tokenId);
 
+        // slither-disable-next-line calls-loop (an unexpected revert here indicates a bug in our NeuMetadata contract that we would need to fix)
         return _neuMetadata.getTraitValues(tokenId, traitKeys);
     }
 
@@ -221,7 +224,14 @@ contract NeuV2 is
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             tokenUris[i] = tokenURI(tokenIds[i]);
-            isUserMinted[i] = _neuMetadata.isUserMinted(tokenIds[i]);
+
+            // slither-disable-start calls-loop (try-catch mitigates the DoS risk on revert)
+            try _neuMetadata.isUserMinted(tokenIds[i]) returns (bool result) {
+                isUserMinted[i] = result;
+            } catch {
+                isUserMinted[i] = false;
+            }
+            // slither-disable-end calls-loop
         }
     }
 

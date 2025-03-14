@@ -70,7 +70,7 @@ contract NeuEntitlementV1 is
         for (uint256 i = 0; i < entitlementContracts.length; i++) {
             IERC721 entitlementContract = IERC721(entitlementContracts[i]);
 
-            if (entitlementContract.balanceOf(user) > 0) {
+            if (_callerHasContractEntitlement(user, entitlementContract)) {
                 return true;
             }
         }
@@ -84,7 +84,8 @@ contract NeuEntitlementV1 is
 
         for (uint256 i = 0; i < entitlementContracts.length; i++) {
             IERC721 entitlementContract = IERC721(entitlementContracts[i]);
-            if (entitlementContract.balanceOf(user) > 0) {
+
+            if (_callerHasContractEntitlement(user, entitlementContract)) {
                 userEntitlements[count] = entitlementContracts[i];
                 count++;
             }
@@ -97,6 +98,17 @@ contract NeuEntitlementV1 is
 
         return result;
     }
+
+    // slither-disable-start calls-loop (try-catch mitigates the DoS risk on revert)
+    function _callerHasContractEntitlement(address user, IERC721 entitlementContract) private view returns (bool) {
+        try entitlementContract.balanceOf(user) returns (uint256 balance) {
+            return balance > 0;
+        } catch {
+            // This case can only happen if the entitlement contract has been updated and doesn't support balanceOf anymore
+            return false;
+        }
+    }
+    // slither-disable-end calls-loop
 
     function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) override {}
 }
