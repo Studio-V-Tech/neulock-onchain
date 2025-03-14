@@ -231,14 +231,8 @@ contract NeuV2 is
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             tokenUris[i] = tokenURI(tokenIds[i]);
-
-            // slither-disable-start calls-loop (try-catch mitigates the DoS risk on revert)
-            try _neuMetadata.isUserMinted(tokenIds[i]) returns (bool result) {
-                isUserMinted[i] = result;
-            } catch {
-                isUserMinted[i] = false;
-            }
-            // slither-disable-end calls-loop
+            // slither-disable-next-line calls-loop (will only revert if there's a bug in our NeuMetadata contract; we don't want to fail silently)
+            isUserMinted[i] = _neuMetadata.isUserMinted(tokenIds[i]);
         }
     }
 
