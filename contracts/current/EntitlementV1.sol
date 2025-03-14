@@ -106,16 +106,10 @@ contract NeuEntitlementV1 is
         return result;
     }
 
-    // slither-disable-start calls-loop (try-catch mitigates the DoS risk on revert)
     function _callerHasContractEntitlement(address user, IERC721 entitlementContract) private view returns (bool) {
-        try entitlementContract.balanceOf(user) returns (uint256 balance) {
-            return balance > 0;
-        } catch {
-            // This case can only happen if the entitlement contract has been updated and doesn't support balanceOf anymore
-            return false;
-        }
+        // slither-disable-next-line calls-loop (will only revert if contract has been upgraded and doesn't support balanceOf(); in this case, we don't want to fail silently)
+        return entitlementContract.balanceOf(user) > 0;
     }
-    // slither-disable-end calls-loop
 
     function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) override {}
 }
