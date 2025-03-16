@@ -28,6 +28,22 @@ describe("DAO Lock", function () {
       await expect(callLockAs(user).setNeuDaoAddress(daoMockAddress)).to.be.reverted;
     });
 
+    it("Clears key token list when operator changes DAO address", async function () {
+      const { user, user2, operator, lock, daoMockAddress, callLockAs } = await loadFixture(daoLockUnlockedFixture);
+
+      const operatorAddress = await operator.getAddress() as `0x${string}`;
+
+      expect(await callLockAs(user).keyTokenIds(0n)).to.equal(1n);
+
+      await expect(callLockAs(operator).setNeuDaoAddress(operatorAddress)).to.emit(lock, "AddressChange").withArgs(operatorAddress);
+      await expect(callLockAs(user2).unlock(3n)).to.emit(lock, "Unlock").withArgs(3n);
+
+      expect(await callLockAs(user).keyTokenIds(0n)).to.equal(3n);
+      await expect(callLockAs(user).keyTokenIds(1n)).to.be.reverted;
+    });
+  });
+
+  describe("Unlocking", function () {
     it("Adds a NEU token as a key", async function () {
       const { user, lock, callLockAs } = await loadFixture(daoLockTokensPurchasedFixture);
 
@@ -48,8 +64,9 @@ describe("DAO Lock", function () {
       
       await expect(callLockAs(user).unlock(3n)).to.be.reverted;
     });
+  });
 
-
+  describe("Canceling unlock", function () {
     it("Reverts when caller calls unlock with owned non-governance token", async function () {
       const { user, lock, callLockAs } = await loadFixture(daoLockFixture);
       
@@ -97,7 +114,9 @@ describe("DAO Lock", function () {
 
       await expect(callLockAs(user).cancelUnlock(2n)).to.be.revertedWith("NEU not found");
     });
+  });
 
+  describe("Receiving funds", function () {
     it("Receives funds when users get sponsor points", async function () {
       const { user, lock, callStorageAs } = await loadFixture(daoLockTokensPurchasedFixture);
 
@@ -109,21 +128,9 @@ describe("DAO Lock", function () {
 
       expect(await ethers.provider.getBalance(await lock.getAddress())).to.equal(10n ** 15n);
     });
+  });
 
-    it("Clears key token list when operator changes DAO address", async function () {
-      const { user, user2, operator, lock, daoMockAddress, callLockAs } = await loadFixture(daoLockUnlockedFixture);
-
-      const operatorAddress = await operator.getAddress() as `0x${string}`;
-
-      expect(await callLockAs(user).keyTokenIds(0n)).to.equal(1n);
-
-      await expect(callLockAs(operator).setNeuDaoAddress(operatorAddress)).to.emit(lock, "AddressChange").withArgs(operatorAddress);
-      await expect(callLockAs(user2).unlock(3n)).to.emit(lock, "Unlock").withArgs(3n);
-
-      expect(await callLockAs(user).keyTokenIds(0n)).to.equal(3n);
-      await expect(callLockAs(user).keyTokenIds(1n)).to.be.reverted;
-    });
-
+  describe("Withdrawing funds", function () {
     it("Withdraws funds to DAO", async function () {
       const { user, lock, daoMockAddress, callLockAs } = await loadFixture(daoLockUnlockedFixture);
 
