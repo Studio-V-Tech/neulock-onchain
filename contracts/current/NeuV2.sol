@@ -14,7 +14,6 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import {IERC7496} from "../interfaces/IERC7496.sol";
 import {INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
 import {INeuV1} from "../interfaces/INeuV1.sol";
-import {TokenMetadata} from "./MetadataV2.sol";
 import {INeuDaoLockV1} from "../interfaces/ILockV1.sol";
 
 contract NeuV2 is
