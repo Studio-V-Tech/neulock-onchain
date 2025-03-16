@@ -6,13 +6,11 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {INeuStorageV1} from "../interfaces/INeuStorageV1.sol";
-import {INeuV1} from "../interfaces/INeuV1.sol";
+import {INeuV1, INeuTokenV1} from "../interfaces/INeuV1.sol";
 import {INeuEntitlementV1} from "../interfaces/IEntitlementV1.sol";
 
-interface INeuToken is INeuV1, IERC721 {}
 
 contract NeuStorageV2 is
     Initializable,
@@ -22,7 +20,7 @@ contract NeuStorageV2 is
 {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    INeuToken private _neuContract;
+    INeuTokenV1 private _neuContract;
     mapping(address => bytes) private _userdata;
     INeuEntitlementV1 private _entitlementContract;
 
@@ -43,7 +41,7 @@ contract NeuStorageV2 is
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(UPGRADER_ROLE, upgrader);
 
-        _neuContract = INeuToken(neuContractAddress);
+        _neuContract = INeuTokenV1(neuContractAddress);
         _entitlementContract = INeuEntitlementV1(entitlementContractAddress);
     }
 
