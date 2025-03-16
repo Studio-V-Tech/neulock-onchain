@@ -225,7 +225,7 @@ describe("Metadata", function () {
       const ogTokenTrait = parseInt(ogTokenTraitBytes.substring(2), 16);
       const wagmiTokenTrait = parseInt(wagmiTokenTraitBytes.substring(2), 16);
 
-      expect(ogTokenTrait).to.equal(1337);
+      expect(ogTokenTrait).to.equal(0);
       expect(wagmiTokenTrait).to.equal(0);
     });
 
@@ -246,7 +246,7 @@ describe("Metadata", function () {
 
       const ogTokenTrait = ogTokenTraitBytes.map((trait) => parseInt(trait.substring(2), 16));
 
-      expect(ogTokenTrait[0]).to.equal(1337);
+      expect(ogTokenTrait[0]).to.equal(0);
     });
   });
 

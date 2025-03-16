@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {IERC7496} from "../interfaces/IERC7496.sol";
-import {INeuMetadataV1} from "../interfaces/INeuMetadataV1.sol";
+import {INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
 import {NeuLogoV2} from "./LogoV2.sol";
 import {Bytes8Utils} from "../lib/Utils.sol";
 
@@ -39,7 +39,7 @@ contract NeuMetadataV2 is
     Initializable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    INeuMetadataV1
+    INeuMetadataV2
 {
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
     bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");
@@ -301,6 +301,11 @@ contract NeuMetadataV2 is
 
         return newSponsorPoints;
     }
+    function isGovernanceToken(uint256 tokenId) external view returns (bool) {
+        // This doesn't check if token has been minted, just if its ID belongs to the range of a governance series
+        uint16 seriesIndex = _seriesOfToken(tokenId);
+        return _givesGovernanceAccess(seriesIndex);
+    }
 
     function _isSeriesAvailable(uint16 seriesIndex) private view returns (bool) {
         uint256 availableSeriesLength = _availableSeries.length;
@@ -411,7 +416,7 @@ contract NeuMetadataV2 is
         return false;
     }
 
-    function _setTraitMetadataURI(string memory uri) internal virtual {
+    function _setTraitMetadataURI(string memory uri) internal {
         // Set the new trait metadata URI.
         _traitMetadataURI = uri;
     }

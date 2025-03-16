@@ -9,7 +9,7 @@ export default async function addSeries() {
   const metadataAddress = ChainContractAddress[chain][Contract.metadata];
   const operatorAddress = ChainTypeAccount[chainType][Account.operator];
 
-  const Metadata = await ethers.getContractFactory("NeuMetadata");
+  const Metadata = await ethers.getContractFactory("NeuMetadataV2");
   const metadata = Metadata.attach(metadataAddress);
   const callAsOperator = metadata.connect(await ethers.getSigner(operatorAddress)) as MetadataBaseContract;
 

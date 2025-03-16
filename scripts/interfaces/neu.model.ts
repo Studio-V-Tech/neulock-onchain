@@ -32,6 +32,8 @@ interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   getTokensWithData(tokenIds: bigint[]): Promise<{ tokenUris: string[], isUserMinted: boolean[] }>;
   getTokensTraitValues(tokenIds: bigint[], traitKeys: Uint8Array[]): Promise<`0x${string}`[][]>;
   burn(tokenId: bigint): Promise<ContractTransactionResponse>;
+  setDaoLockContract(newDaoLockContract: `0x${string}`): Promise<ContractTransactionResponse>;
+  isGovernanceToken(tokenId: bigint): Promise<boolean>;
 }
 
 export default NeuBaseContract;

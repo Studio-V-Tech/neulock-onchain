@@ -6,7 +6,7 @@ import { Account, ChainType, ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
 
 async function deployContractsV1({ isTest } : { isTest?: boolean } = {}
-): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
+): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
 
@@ -19,6 +19,7 @@ async function deployContractsV1({ isTest } : { isTest?: boolean } = {}
   const Storage = await ethers.getContractFactory("NeuStorageV1");
   const Logo = await ethers.getContractFactory("NeuLogoV1");
   const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
+  const Lock = await ethers.getContractFactory("NeuDaoLockV1");
 
   let operatorSigner = chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
 
@@ -44,6 +45,14 @@ async function deployContractsV1({ isTest } : { isTest?: boolean } = {}
   ]);
 
   await entitlement.waitForDeployment();
+
+  const lock = await Lock.deploy(
+    adminAddress,
+    operatorAddress,
+    neuAddress,
+  );
+
+  await lock.waitForDeployment();
 
   const storage = await upgrades.deployProxy(Storage, [
     adminAddress,
@@ -81,6 +90,7 @@ async function deployContractsV1({ isTest } : { isTest?: boolean } = {}
     metadata,
     logo,
     entitlement,
+    lock,
   ];
 }
 

@@ -25,9 +25,9 @@ describe("Entitlement", function () {
     });
 
     it("Adds entitlement contract", async function () {
-      const { operator, callEntitlementAs, lock } = await loadFixture(unlockFixture);
+      const { operator, callEntitlementAs, unlockLock } = await loadFixture(unlockFixture);
 
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).not.to.be.reverted;
 
       const secondContract = await callEntitlementAs(operator).entitlementContracts(1n);
@@ -36,9 +36,9 @@ describe("Entitlement", function () {
     });
 
     it("Reverts upon adding same entitlement contract twice", async function () {
-      const { operator, callEntitlementAs, lock } = await loadFixture(entitlementFixture);
+      const { operator, callEntitlementAs, unlockLock } = await loadFixture(entitlementFixture);
 
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
 
       await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).to.be.revertedWith("Entitlement contract already added");
     });
@@ -52,9 +52,9 @@ describe("Entitlement", function () {
     });
 
     it("Removes NEU entitlement contract", async function () {
-      const { operator, callEntitlementAs, neu, lock } = await loadFixture(entitlementFixture);
+      const { operator, callEntitlementAs, neu, unlockLock } = await loadFixture(entitlementFixture);
 
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const neuAddress = await neu.getAddress() as `0x${string}`;
 
       await expect(callEntitlementAs(operator).removeEntitlementContract(neuAddress)).not.to.be.reverted;
@@ -66,9 +66,9 @@ describe("Entitlement", function () {
     });
 
     it("Removes additional entitlement contract", async function () {
-      const { operator, callEntitlementAs, neu, lock } = await loadFixture(entitlementFixture);
+      const { operator, callEntitlementAs, neu, unlockLock } = await loadFixture(entitlementFixture);
 
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const neuAddress = await neu.getAddress() as `0x${string}`;
 
       await expect(callEntitlementAs(operator).removeEntitlementContract(lockAddress)).not.to.be.reverted;
@@ -138,9 +138,9 @@ describe("Entitlement", function () {
     });
 
     it("Lists entitlement for user with only additional entitlement", async function () {
-      const { callEntitlementAs, user3, user5, lock } = await loadFixture(entitlementFixture);
+      const { callEntitlementAs, user3, user5, unlockLock } = await loadFixture(entitlementFixture);
 
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const user3Address = user3.address as `0x${string}`;
 
       const entitlements = await callEntitlementAs(user5).userEntitlementContracts(user3Address);
@@ -150,10 +150,10 @@ describe("Entitlement", function () {
     });
 
     it("Lists entitlement for user with both NEU and additional entitlement", async function () {
-      const { callEntitlementAs, user, user5, neu, lock } = await loadFixture(entitlementFixture);
+      const { callEntitlementAs, user, user5, neu, unlockLock } = await loadFixture(entitlementFixture);
 
       const neuAddress = await neu.getAddress() as `0x${string}`;
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const userAddress = user.address as `0x${string}`;
 
       const entitlements = await callEntitlementAs(user5).userEntitlementContracts(userAddress);
@@ -176,9 +176,9 @@ describe("Entitlement", function () {
 
   describe("Access control specifics", function () {
     it("Obeys new roles in add contract calls", async function () {
-      const { admin, operator, user, callEntitlementAs, lock } = await loadFixture(unlockFixture);
+      const { admin, operator, user, callEntitlementAs, unlockLock } = await loadFixture(unlockFixture);
 
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const { operatorRole } = getRoles();
 
       await (await callEntitlementAs(admin).grantRole(operatorRole, user.address as `0x${string}`)).wait();
@@ -189,9 +189,9 @@ describe("Entitlement", function () {
     });
 
     it("Obeys new roles in remove contract calls", async function () {
-      const { admin, operator, user, callEntitlementAs, lock } = await loadFixture(entitlementFixture);
+      const { admin, operator, user, callEntitlementAs, unlockLock } = await loadFixture(entitlementFixture);
 
-      const lockAddress = await lock.getAddress() as `0x${string}`;
+      const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const { operatorRole } = getRoles();
 
       await (await callEntitlementAs(admin).grantRole(operatorRole, user.address as `0x${string}`)).wait();

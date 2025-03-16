@@ -6,7 +6,7 @@ import { Account, ChainType, ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
 
 async function deployContracts({ isTest } : { isTest?: boolean } = {}
-): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
+): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
 
@@ -19,6 +19,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   const Storage = await ethers.getContractFactory("NeuStorageV2");
   const Logo = await ethers.getContractFactory("NeuLogoV2");
   const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
+  const Lock = await ethers.getContractFactory("NeuDaoLockV1");
 
   let operatorSigner = chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
 
@@ -52,6 +53,17 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   const entitlementAddress = await entitlement.getAddress();
   console.log(`Neulock Entitlement deployed at: ${entitlementAddress}`);
 
+  const lock = await Lock.deploy(
+    adminAddress,
+    operatorAddress,
+    neuAddress,
+  );
+
+  await lock.waitForDeployment();
+
+  const lockAddress = await lock.getAddress();
+  console.log(`Neulock DAO Lock deployed at:    ${lockAddress}`);
+
   const storage = await upgrades.deployProxy(Storage, [
     adminAddress,
     upgraderAddress,
@@ -84,6 +96,8 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
 
     await (await neuRunner.setMetadataContract(metadataAddress as `0x${string}`)).wait();
     console.log('Metadata contract set on NEU token');
+    await (await neuRunner.setDaoLockContract(lockAddress as `0x${string}`)).wait();
+    console.log('DAO Lock contract set on NEU token');
     await (await neuRunner.setStorageContract(storageAddress as `0x${string}`)).wait();
     console.log('Storage contract set on NEU token');
     await (await neuRunner.setTraitMetadataURI(traitMetadataUri)).wait();
@@ -102,6 +116,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
     metadata,
     logo,
     entitlement,
+    lock,
   ];
 }
 

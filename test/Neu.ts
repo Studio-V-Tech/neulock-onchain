@@ -10,7 +10,6 @@ import { TokenMetadata, day, stringToBytes, seriesValue, getRoles, validateToken
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture, setUserDataFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
-
 interface NeuIncreaseBalance extends BaseContract {
   increaseBalance(address: `0x${string}`, value: bigint): Promise<ContractTransactionResponse>;
 }
@@ -506,8 +505,8 @@ describe("Neu", function () {
       const token5TraitBytes = await callNeuAs(user).getTraitValue(5n, pointsTrait);
 
       expect(parseSponsorPointsResponse(token100001TraitBytes)).to.equal(0);
-      expect(parseSponsorPointsResponse(token2TraitBytes)).to.equal(1338);
-      expect(parseSponsorPointsResponse(token3TraitBytes)).to.equal(1437);
+      expect(parseSponsorPointsResponse(token2TraitBytes)).to.equal(1);
+      expect(parseSponsorPointsResponse(token3TraitBytes)).to.equal(100);
       expect(parseSponsorPointsResponse(token100004TraitBytes)).to.equal(10_000);
       expect(parseSponsorPointsResponse(token5TraitBytes)).to.equal(9_000_000);
     });
@@ -519,7 +518,7 @@ describe("Neu", function () {
 
       const tokenTrait = tokenTraitBytes.map((trait) => parseSponsorPointsResponse(trait));
 
-      expect(tokenTrait[0]).to.equal(1437);
+      expect(tokenTrait[0]).to.equal(100);
     });
 
     it("Gets multiple dynamic traits correctly for multiple tokens", async function () {
@@ -531,7 +530,7 @@ describe("Neu", function () {
       const wagmiTokenTrait = wagmiTokenTraitBytes.map((trait) => parseSponsorPointsResponse(trait));
 
       expect(ogTokenTrait).to.be.an("array").with.lengthOf(1);
-      expect(ogTokenTrait[0]).to.equal(1437);
+      expect(ogTokenTrait[0]).to.equal(100);
 
       expect(wagmiTokenTrait).to.be.an("array").with.lengthOf(1);
       expect(wagmiTokenTrait[0]).to.equal(0);
@@ -563,8 +562,8 @@ describe("Neu", function () {
       const token5TraitBytes = await callNeuAs(user).getTraitValue(5n, pointsTrait);
 
       expect(parseSponsorPointsResponse(token100001TraitBytes)).to.equal(10);
-      expect(parseSponsorPointsResponse(token2TraitBytes)).to.equal(1341);
-      expect(parseSponsorPointsResponse(token3TraitBytes)).to.equal(1537);
+      expect(parseSponsorPointsResponse(token2TraitBytes)).to.equal(4);
+      expect(parseSponsorPointsResponse(token3TraitBytes)).to.equal(200);
       expect(parseSponsorPointsResponse(token100004TraitBytes)).to.equal(10_001);
       expect(parseSponsorPointsResponse(token5TraitBytes)).to.equal(18_000_000);
     });
@@ -595,7 +594,7 @@ describe("Neu", function () {
 
       const token100001TraitBytes = await callNeuAs(user2).getTraitValue(2n, pointsTrait);
 
-      expect(parseSponsorPointsResponse(token100001TraitBytes)).to.equal(1340);
+      expect(parseSponsorPointsResponse(token100001TraitBytes)).to.equal(3);
     });
 
     it("Reverts on setting wei per sponsor point less than 1 gwei", async function () {
@@ -635,7 +634,7 @@ describe("Neu", function () {
 
   describe("Increase balance test (not covered otherwise)", function () {
     it("Reverts on calling _increaseBalance", async function () {
-      const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
+      const { operator } = await loadFixture(deployContractsFixture);
 
       const NeuIncreaseBalance = await ethers.getContractFactory("NeuIncreaseBalance");
       const neuIncreaseBalance = await NeuIncreaseBalance.deploy();

@@ -14,6 +14,7 @@ export enum AccessControlSupportedContracts {
   Metadata,
   Storage,
   Entitlement,
+  Lock,
 }
 
 const contractsWithUpgrader = [
@@ -27,11 +28,12 @@ const contractsWithOperator = [
   AccessControlSupportedContracts.Neu,
   AccessControlSupportedContracts.Metadata,
   AccessControlSupportedContracts.Entitlement,
+  AccessControlSupportedContracts.Lock,
 ];
 
 type CallAs = (runner: HardhatEthersSigner) => AccessControlBaseContract;
 
-function getCallAs(contract: AccessControlSupportedContracts, neu: CallAs, metadata: CallAs, storage: CallAs, entitlement: CallAs) {
+function getCallAs(contract: AccessControlSupportedContracts, neu: CallAs, metadata: CallAs, storage: CallAs, entitlement: CallAs, lock: CallAs) {
   switch (contract) {
     case AccessControlSupportedContracts.Neu:
       return neu;
@@ -41,6 +43,8 @@ function getCallAs(contract: AccessControlSupportedContracts, neu: CallAs, metad
       return storage;
     case AccessControlSupportedContracts.Entitlement:
       return entitlement;
+    case AccessControlSupportedContracts.Lock:
+      return lock;
   }
 }
 
@@ -48,11 +52,11 @@ export function accessControlTestFactory(contract: AccessControlSupportedContrac
   return function () {
     it("Sets default roles correctly", async function () {
       const {
-        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs,
+        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs,
         admin, upgrader, operator, user
       } = await loadFixture(deployContractsFixture);
 
-      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs);
+      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs);
       const { adminRole, upgraderRole, operatorRole } = getRoles();
 
       expect(await callAs(user).hasRole(adminRole, admin.address as `0x${string}`)).to.be.true;
@@ -77,11 +81,11 @@ export function accessControlTestFactory(contract: AccessControlSupportedContrac
 
     it("Sets role admins correctly", async function () {
       const {
-        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs,
+        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs,
         user
       } = await loadFixture(deployContractsFixture);
 
-      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs);
+      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs);
 
       const { adminRole, upgraderRole, operatorRole } = getRoles();
 
@@ -92,11 +96,11 @@ export function accessControlTestFactory(contract: AccessControlSupportedContrac
 
     it("Grants roles correctly", async function () {
       const {
-        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs,
+        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs,
         admin, user, user2
       } = await loadFixture(deployContractsFixture);
 
-      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs);
+      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs);
 
       const { upgraderRole, operatorRole } = getRoles();
 
@@ -110,11 +114,11 @@ export function accessControlTestFactory(contract: AccessControlSupportedContrac
 
     it("Revokes roles correctly", async function () {
       const {
-        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs,
+        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs,
         admin, upgrader, operator, user
       } = await loadFixture(deployContractsFixture);
 
-      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs);
+      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs);
 
       const { upgraderRole, operatorRole } = getRoles();
 
@@ -128,11 +132,11 @@ export function accessControlTestFactory(contract: AccessControlSupportedContrac
 
     it("Obeys new roles in function calls", async function () {
       const {
-        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs,
+        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs,
         admin, user, user2
       } = await loadFixture(deployContractsFixture);
 
-      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs);
+      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs);
 
       const { adminRole, upgraderRole } = getRoles();
 
@@ -146,11 +150,11 @@ export function accessControlTestFactory(contract: AccessControlSupportedContrac
 
     it("Sets admin role correctly", async function () {
       const {
-        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs,
+        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs,
         admin, user, user2
       } = await loadFixture(deployContractsFixture);
 
-      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs);
+      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs);
 
       const { adminRole, upgraderRole } = getRoles();
 
@@ -166,11 +170,11 @@ export function accessControlTestFactory(contract: AccessControlSupportedContrac
 
     it("Reverts on setting roles for non-admin", async function () {
       const {
-        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs,
+        callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs,
         user, user2, upgrader, operator
       } = await loadFixture(deployContractsFixture);
 
-      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs);
+      const callAs = getCallAs(contract, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs);
 
       const { adminRole, upgraderRole, operatorRole } = getRoles();
 

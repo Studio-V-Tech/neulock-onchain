@@ -12,9 +12,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {IERC7496} from "../interfaces/IERC7496.sol";
-import {INeuMetadataV1} from "../interfaces/INeuMetadataV1.sol";
+import {INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
 import {INeuV1} from "../interfaces/INeuV1.sol";
 import {TokenMetadata} from "./MetadataV2.sol";
+import {INeuDaoLockV1} from "../interfaces/ILockV1.sol";
 
 contract NeuV2 is
     INeuV1,
@@ -32,8 +33,11 @@ contract NeuV2 is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant POINTS_INCREASER_ROLE = keccak256("POINTS_INCREASER_ROLE");
 
+    uint256 private constant GWEI = 1e9;
+
     uint256 public weiPerSponsorPoint;
-    INeuMetadataV1 private _neuMetadata;
+    INeuMetadataV2 private _neuMetadata;
+    INeuDaoLockV1 private _neuDaoLock;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -58,11 +62,14 @@ contract NeuV2 is
 
         _setDefaultRoyalty(address(this), 1000); // 10%
 
+
         weiPerSponsorPoint = 1e14; // 0.0001 ETH
     }
 
-    function initializeV2() public reinitializer(2) {
+    function initializeV2(address payable neuDaoLockAddress) public reinitializer(2) onlyRole(UPGRADER_ROLE) {
         __ReentrancyGuard_init();
+
+        _neuDaoLock = INeuDaoLockV1(neuDaoLockAddress);
     }
 
     function getTraitMetadataURI()
@@ -91,15 +98,15 @@ contract NeuV2 is
         // slither-disable-end calls-loop
     }
 
-    function setMetadataContract(
-        address newMetadataContract
-    ) external onlyRole(OPERATOR_ROLE) {
-        _neuMetadata = INeuMetadataV1(newMetadataContract);
+    function setMetadataContract(address newMetadataContract) external onlyRole(OPERATOR_ROLE) {
+        _neuMetadata = INeuMetadataV2(newMetadataContract);
     }
 
-    function setStorageContract(
-        address newStorageContract
-    ) external onlyRole(OPERATOR_ROLE) {
+    function setDaoLockContract(address payable newDaoLockContract) external onlyRole(OPERATOR_ROLE) {
+        _neuDaoLock = INeuDaoLockV1(newDaoLockContract);
+    }
+
+    function setStorageContract(address newStorageContract) external onlyRole(OPERATOR_ROLE) {
         _grantRole(POINTS_INCREASER_ROLE, newStorageContract);
     }
 
@@ -126,11 +133,7 @@ contract NeuV2 is
         uint256 seriesPrice = _neuMetadata.getSeriesMintingPrice(seriesIndex);
 
         require(msg.value >= seriesPrice, "Not enough ETH sent");
-        (uint256 tokenId, bool governance) = _privateMint(msg.sender, seriesIndex, seriesPrice);
-
-        if (governance && msg.value >= weiPerSponsorPoint) {
-            _increaseSponsorPoints(tokenId, msg.value);
-        }
+        _privateMint(msg.sender, seriesIndex, seriesPrice);
     }
 
     function burn (uint256 tokenId) public override {
@@ -158,26 +161,28 @@ contract NeuV2 is
         payable(msg.sender).transfer(refundAmount);
     }
 
-    function increaseSponsorPoints(uint256 tokenId) external payable onlyRole(POINTS_INCREASER_ROLE) returns (uint256, uint256) {
-        return _increaseSponsorPoints(tokenId, msg.value);
+    function increaseSponsorPoints(uint256 tokenId) external payable onlyRole(POINTS_INCREASER_ROLE) returns (uint256 newSponsorPoints, uint256 sponsorPointsIncrease) {
+        (newSponsorPoints, sponsorPointsIncrease) = _increaseSponsorPoints(tokenId, msg.value);
+
+        // slither-disable-next-line low-level-calls (calling like this is the best practice for sending Ether)
+        (bool sent, ) = address(_neuDaoLock).call{value: msg.value}("");
+        require(sent, "Failed to send Ether");
     }
 
-    function _increaseSponsorPoints(uint256 tokenId, uint256 value) private nonReentrant() returns (uint256, uint256) {
-        uint256 sponsorPointsIncrease = value / weiPerSponsorPoint;
+    function _increaseSponsorPoints(uint256 tokenId, uint256 value) private nonReentrant() returns (uint256 newSponsorPoints, uint256 sponsorPointsIncrease) {
+        sponsorPointsIncrease = value / weiPerSponsorPoint;
 
         if (sponsorPointsIncrease == 0) {
             revert("Not enough ETH sent");
         }
 
-        uint256 newSponsorPoints = _neuMetadata.increaseSponsorPoints(tokenId, sponsorPointsIncrease);
+        newSponsorPoints = _neuMetadata.increaseSponsorPoints(tokenId, sponsorPointsIncrease);
 
         emit IERC7496.TraitUpdated(bytes32("points"), tokenId, bytes32(newSponsorPoints));
-
-        return (newSponsorPoints, sponsorPointsIncrease);
     }
 
     function setWeiPerSponsorPoint(uint256 newWeiPerSponsorPoint) external onlyRole(OPERATOR_ROLE) {
-        require(newWeiPerSponsorPoint >= 1e9, "Must be at least 1 gwei");
+        require(newWeiPerSponsorPoint >= GWEI, "Must be at least 1 gwei");
         weiPerSponsorPoint = newWeiPerSponsorPoint;
     }
 
@@ -244,46 +249,33 @@ contract NeuV2 is
         }
     }
 
+    function isGovernanceToken(uint256 tokenId) external view returns (bool) {
+        _requireOwned(tokenId);
+
+        return _neuMetadata.isGovernanceToken(tokenId);
+    }
+
     // The following functions are overrides required by Solidity.
 
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    )
-        internal
-        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
-        returns (address)
-    {
+    function _update(address to, uint256 tokenId, address auth) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) returns (address) {
         return super._update(to, tokenId, auth);
     }
 
-    function _increaseBalance(
-        address account,
-        uint128 value
-    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+    function _increaseBalance(address account, uint128 value) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         super._increaseBalance(account, value);
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    )
-        public
-        view
-        override(
+    function supportsInterface(bytes4 interfaceId) public view override(
             AccessControlUpgradeable,
             ERC721EnumerableUpgradeable,
             ERC721RoyaltyUpgradeable,
             ERC721Upgradeable
-        )
-        returns (bool)
+        ) returns (bool)
     {
         return
             super.supportsInterface(interfaceId) ||
             interfaceId == type(IERC7496).interfaceId;
     }
 
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
 }
