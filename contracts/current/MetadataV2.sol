@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import {INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
+import {Series, TokenMetadata, INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
 import {NeuLogoV2} from "./LogoV2.sol";
 import {Bytes8Utils} from "../lib/Utils.sol";
 
@@ -16,30 +16,14 @@ using Bytes8Utils for bytes8;
 using Strings for uint256;
 using SafeCast for uint256;
 
-struct Series {
-    bytes8 name;
-    uint64 priceInGwei;
-    uint32 firstToken;
-    uint32 maxTokens;
-    uint32 mintedTokens;
-    uint32 burntTokens;
-    uint16 fgColorRGB565;
-    uint16 bgColorRGB565;
-    uint16 accentColorRGB565;
-}
-
-struct TokenMetadata {
-    uint64 originalPriceInGwei;
-    uint64 sponsorPoints;
-    uint40 mintedAt;
-}
-
 contract NeuMetadataV2 is
     Initializable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
     INeuMetadataV2
 {
+    uint256 private constant VERSION = 2;
+
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
     bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -73,6 +57,8 @@ contract NeuMetadataV2 is
         _grantRole(NEU_ROLE, neuContract);
 
         _logo = NeuLogoV2(logoContract);
+
+        emit InitializedMetadata(VERSION, defaultAdmin, upgrader, operator, neuContract, logoContract);
     }
 
     function createTokenMetadata(uint16 seriesIndex, uint256 originalPrice) external onlyRole(NEU_ROLE) returns (
@@ -106,6 +92,8 @@ contract NeuMetadataV2 is
 
         _series[seriesIndex].burntTokens++;
         delete _tokenMetadata[tokenId];
+
+        emit TokenMetadataDeleted(tokenId);
     }
 
     function setTraitMetadataURI(string calldata uri) external onlyRole(NEU_ROLE) {
@@ -172,6 +160,7 @@ contract NeuMetadataV2 is
             _availableSeries.push(seriesIndex);
         }
 
+        emit SeriesAdded(seriesIndex, name, priceInGwei, firstToken, maxTokens, fgColorRGB565, bgColorRGB565, accentColorRGB565, makeAvailable);
         return seriesIndex;
     }
 
@@ -219,8 +208,12 @@ contract NeuMetadataV2 is
 
         if (available && !isAlreadyAvailable) {
             _availableSeries.push(seriesIndex);
+
+            emit SeriesAvailabilityUpdated(seriesIndex, available);
         } else if (!available && isAlreadyAvailable) {
             _removeAvailableSeries(seriesIndex);
+
+            emit SeriesAvailabilityUpdated(seriesIndex, available);
         }
     }
 
@@ -231,6 +224,8 @@ contract NeuMetadataV2 is
     function setPriceInGwei(uint16 seriesIndex, uint64 price) external onlyRole(OPERATOR_ROLE) {
         require(seriesIndex < _series.length, "Invalid series index");
         _series[seriesIndex].priceInGwei = price;
+
+        emit SeriesPriceUpdated(seriesIndex, price);
     }
 
     function getSeriesMintingPrice(uint16 seriesIndex) external view returns (uint256) {
@@ -277,6 +272,8 @@ contract NeuMetadataV2 is
 
     function setLogoContract(address logoContract) external onlyRole(OPERATOR_ROLE) {
         _logo = NeuLogoV2(logoContract);
+        
+        emit LogoUpdated(logoContract);
     }
 
     function _setTokenMetadata(
@@ -285,6 +282,8 @@ contract NeuMetadataV2 is
     ) internal {
         // This function is to be called only on token mint. Won't emit TraitUpdated event.
         _tokenMetadata[tokenId] = metadata;
+
+        emit TokenMetadataUpdated(tokenId, metadata);
     }
 
     function increaseSponsorPoints(uint256 tokenId, uint256 sponsorPointsIncrease) external onlyRole(NEU_ROLE) returns (uint256) {
@@ -298,6 +297,7 @@ contract NeuMetadataV2 is
             mintedAt: metadata.mintedAt
         });
 
+        emit TraitUpdated(bytes32("points"), tokenId, bytes32(newSponsorPoints));
         return newSponsorPoints;
     }
     function isGovernanceToken(uint256 tokenId) external view returns (bool) {
@@ -418,6 +418,8 @@ contract NeuMetadataV2 is
     function _setTraitMetadataURI(string memory uri) internal {
         // Set the new trait metadata URI.
         _traitMetadataURI = uri;
+
+        emit MetadataURIUpdated(uri);
     }
 
     function _authorizeUpgrade(address newImplementation)

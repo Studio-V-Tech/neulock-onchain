@@ -13,11 +13,11 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 
 import {IERC7496} from "../interfaces/IERC7496.sol";
 import {INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
-import {INeuV1} from "../interfaces/INeuV1.sol";
+import {INeuV2} from "../interfaces/INeuV2.sol";
 import {INeuDaoLockV1} from "../interfaces/ILockV1.sol";
 
 contract NeuV2 is
-    INeuV1,
+    INeuV2,
     IERC7496,
     Initializable,
     ERC721Upgradeable,
@@ -28,6 +28,8 @@ contract NeuV2 is
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable
 {
+    uint256 private constant VERSION = 2;
+
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant POINTS_INCREASER_ROLE = keccak256("POINTS_INCREASER_ROLE");
@@ -61,14 +63,17 @@ contract NeuV2 is
 
         _setDefaultRoyalty(address(this), 1000); // 10%
 
-
         weiPerSponsorPoint = 1e14; // 0.0001 ETH
+
+        emit InitializedNeu(VERSION, defaultAdmin, upgrader, operator);
     }
 
     function initializeV2(address payable neuDaoLockAddress) public reinitializer(2) onlyRole(UPGRADER_ROLE) {
         __ReentrancyGuard_init();
 
         _neuDaoLock = INeuDaoLockV1(neuDaoLockAddress);
+
+        emit InitializedNeuV2(neuDaoLockAddress);
     }
 
     function getTraitMetadataURI()
@@ -99,14 +104,20 @@ contract NeuV2 is
 
     function setMetadataContract(address newMetadataContract) external onlyRole(OPERATOR_ROLE) {
         _neuMetadata = INeuMetadataV2(newMetadataContract);
+
+        emit MetadataContractUpdated(newMetadataContract);
     }
 
     function setDaoLockContract(address payable newDaoLockContract) external onlyRole(OPERATOR_ROLE) {
         _neuDaoLock = INeuDaoLockV1(newDaoLockContract);
+        
+        emit DaoLockContractUpdated(newDaoLockContract);
     }
 
     function setStorageContract(address newStorageContract) external onlyRole(OPERATOR_ROLE) {
         _grantRole(POINTS_INCREASER_ROLE, newStorageContract);
+
+        emit StorageContractUpdated(newStorageContract);
     }
 
     function _privateMint(
@@ -183,6 +194,8 @@ contract NeuV2 is
     function setWeiPerSponsorPoint(uint256 newWeiPerSponsorPoint) external onlyRole(OPERATOR_ROLE) {
         require(newWeiPerSponsorPoint >= GWEI, "Must be at least 1 gwei");
         weiPerSponsorPoint = newWeiPerSponsorPoint;
+
+        emit WeiPerSponsorPointUpdated(newWeiPerSponsorPoint);
     }
 
     function setTrait(

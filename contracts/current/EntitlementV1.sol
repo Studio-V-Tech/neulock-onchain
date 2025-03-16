@@ -14,10 +14,12 @@ contract NeuEntitlementV1 is
     UUPSUpgradeable,
     INeuEntitlementV1
 {
+    uint256 private constant VERSION = 1;
+
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
-    address[] public override entitlementContracts;
+    address[] public entitlementContracts;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -38,6 +40,8 @@ contract NeuEntitlementV1 is
         _grantRole(OPERATOR_ROLE, operator);
 
         entitlementContracts.push(neuContract);
+
+        emit InitializedEntitlement(VERSION, defaultAdmin, upgrader, operator, neuContract);
     }
 
     function addEntitlementContract(address entitlementContract) external onlyRole(OPERATOR_ROLE) override {
@@ -54,6 +58,8 @@ contract NeuEntitlementV1 is
         }
 
         entitlementContracts.push(entitlementContract);
+
+        emit EntitlementContractAdded(entitlementContract);
     }
 
     function removeEntitlementContract(address entitlementContract) external onlyRole(OPERATOR_ROLE) override {
@@ -62,6 +68,8 @@ contract NeuEntitlementV1 is
                 entitlementContracts[i] = entitlementContracts[entitlementContracts.length - 1];
                 // slither-disable-next-line costly-loop (we only pop once and return)
                 entitlementContracts.pop();
+
+                emit EntitlementContractRemoved(entitlementContract);
                 return;
             }
         }
