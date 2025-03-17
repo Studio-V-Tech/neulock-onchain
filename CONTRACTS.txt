@@ -1,6 +1,18 @@
 CONTRACTS.txt
 
-This document describes how to call the external functions of the NeuStorageV2, NeuEntitlementV1, and NeuMetadataV2 smart contracts. Please note that you need an Ethereum wallet and likely an interface to interact with these functions on the blockchain. Some functions have access restrictions and can only be called by addresses with specific roles.
+This document describes how to call the external functions of the NeuV2, NeuStorageV2, NeuMetadataV2, NeuLogoV2, NeuEntitlementV1, and NeuDaoLockV1 smart contracts.
+
+Please note that the end user is not expected to interact with these contracts directly; they are meant to be consumed by the Neulock frontend app available at https://web.neulock.app .
+
+**Contract descriptions**
+These general descriptions are valid regardless of contract version.
+
+- Neu: An ERC-721 NFT that gives lifetime membership to Neulock and may give governance rights, depending on its metadata.
+- NeuMetadata: Manages metadata and dynamic traits for the NEU token. All data and traits are on-chain.
+- NeuLogo: Exposes only a pure function that generates the unique logo for each NEU token on-chain.
+- NeuEntitlement: Checks if a wallet has entitlement to Neulock by checking for existing balance of NEU and other subscription tokens.
+- NeuDaoLock: Locks all sponsorship funds until the Neulock community agrees and approves of a DAO contract.
+
 
 **NeuV2 Contract**
 
