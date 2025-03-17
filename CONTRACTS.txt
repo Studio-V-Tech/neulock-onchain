@@ -9,6 +9,7 @@ These general descriptions are valid regardless of contract version.
 
 - Neu: An ERC-721 NFT that gives lifetime membership to Neulock and may give governance rights, depending on its metadata.
 - NeuMetadata: Manages metadata and dynamic traits for the NEU token. All data and traits are on-chain.
+- NeuStorage: Stores and updates end-to-end encrypted references to user data (also e2ee) on IPFS.
 - NeuLogo: Exposes only a pure function that generates the unique logo for each NEU token on-chain.
 - NeuEntitlement: Checks if a wallet has entitlement to Neulock by checking for existing balance of NEU and other subscription tokens.
 - NeuDaoLock: Locks all sponsorship funds until the Neulock community agrees and approves of a DAO contract.
