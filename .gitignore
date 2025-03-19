@@ -150,3 +150,6 @@ ignition/deployments/chain-31337
 # Aderyn reports
 report.md
 aderyn-report.md
+
+#Mythril solcx lock
+.solcx-lock-*

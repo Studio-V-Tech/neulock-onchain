@@ -1,13 +1,23 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { ethers } from "hardhat";
 import { expect } from "chai";
 
-import { day, seriesValue, TokenMetadata, userDataBytesArray, userDataHexArray, validateTokenMetadataCommonAttributes } from "../scripts/lib/utils";
+import {
+  day,
+  seriesValue,
+  stringToBytes,
+  TokenMetadata,
+  userDataBytesArray,
+  userDataHexArray,
+  validateSvg,
+  validateTokenMetadataCommonAttributes,
+} from "../scripts/lib/utils";
 import {
   deployContractsV1Fixture,
   upgradeToStorageV2Fixture,
   upgradeToNeuV2Fixture,
+  upgradeToMetadataV2Fixture,
 } from "./lib/upgrade-fixtures";
-import { ethers } from "hardhat";
 
 describe("Upgrades", function () {
   describe("V1 deployments", function () {
@@ -416,6 +426,138 @@ describe("Upgrades", function () {
       expect(wagmiTokenMetadata.attributes[1].value).to.equal("No");
       expect(wagmiTokenMetadata.attributes[2].value).to.equal(1000);
     });
+  });
 
+  describe("Metadata V2 upgrade", function () {
+    it("Upgrades Metadata to V2", async function () {
+      const { metadataV2 } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      expect(await metadataV2.getAddress()).to.be.properAddress;
+    });
+
+    it("Gets dynamic trait correctly", async function () {
+      const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const pointsTrait = stringToBytes("points", 32);
+
+      const token1TraitBytes = await callMetadataV2As(user).getTraitValue(1n, pointsTrait);
+      const token100001TraitBytes = await callMetadataV2As(user).getTraitValue(100001n, pointsTrait);
+      const token2TraitBytes = await callMetadataV2As(user).getTraitValue(2n, pointsTrait);
+      const token3TraitBytes = await callMetadataV2As(user).getTraitValue(3n, pointsTrait);
+      const token100004TraitBytes = await callMetadataV2As(user).getTraitValue(100004n, pointsTrait);
+      const token5TraitBytes = await callMetadataV2As(user).getTraitValue(5n, pointsTrait);
+
+
+      expect(parseInt(token1TraitBytes.substring(2), 16)).to.equal(1_337);
+      expect(parseInt(token100001TraitBytes.substring(2), 16)).to.equal(0);
+      expect(parseInt(token2TraitBytes.substring(2), 16)).to.equal(1_338);
+      expect(parseInt(token3TraitBytes.substring(2), 16)).to.equal(1_437);
+      expect(parseInt(token100004TraitBytes.substring(2), 16)).to.equal(10_000);
+      expect(parseInt(token5TraitBytes.substring(2), 16)).to.equal(9_000_000);
+    });
+
+    it("Reverts on getting nonexistant dynamic trait", async function () {
+      const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const nonexistantTrait = stringToBytes("nonexistant", 32);
+
+      await expect(callMetadataV2As(user).getTraitValue(1n, nonexistantTrait)).to.be.revertedWith("Trait key not found");
+    });
+
+    it("Gets multiple dynamic traits correctly", async function () {
+      const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const pointsTrait = stringToBytes("points", 32);
+
+      const ogTokenTraitBytes = await callMetadataV2As(user).getTraitValues(1n, [pointsTrait]);
+
+      const ogTokenTrait = ogTokenTraitBytes.map((trait) => parseInt(trait.substring(2), 16));
+
+      expect(ogTokenTrait[0]).to.equal(1_337);
+    });
+
+    it("Gets series availability correctly", async function () {
+      const { user, callMetadataV2As, wagmiId, ogId, uniqueId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      expect(await callMetadataV2As(user).isSeriesAvailable(wagmiId)).to.be.true;
+      expect(await callMetadataV2As(user).isSeriesAvailable(ogId)).to.be.true;
+      expect(await callMetadataV2As(user).isSeriesAvailable(uniqueId)).to.be.true;
+      expect(await callMetadataV2As(user).isSeriesAvailable(42n)).to.be.false;
+    });
+
+    it("Gets minted count correctly", async function () {
+      const { user, callMetadataV2As, wagmiId, ogId, uniqueId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const wagmi = await callMetadataV2As(user).getSeries(wagmiId);
+      const og = await callMetadataV2As(user).getSeries(ogId);
+      const unique = await callMetadataV2As(user).getSeries(uniqueId);
+
+      expect(wagmi.mintedTokens).to.equal(5);
+      expect(og.mintedTokens).to.equal(5);
+      expect(unique.mintedTokens).to.equal(0);
+    });
+
+    it("Reverts when adding series with existing name", async function () {
+      const { operator, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await expect(callMetadataV2As(operator).addSeries(stringToBytes('WAGMI1'), 1337n * 10n ** 4n, 200000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("Series name already exists");
+    });
+
+    it("Reverts when adding series overlapping with existing one", async function () {
+      const { operator, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await expect(callMetadataV2As(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100001n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith( "Series overlaps with existing");
+      await expect(callMetadataV2As(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100000n, 2n, 1000n, 1000n, 1000n, true)).to.be.revertedWith( "Series overlaps with existing");
+      await expect(callMetadataV2As(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 101000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith( "Series overlaps with existing");
+    });
+
+    it("Gets availability correctly", async function () {
+      const { user, callMetadataV2As, wagmiId, ogId, uniqueId } = await loadFixture(upgradeToMetadataV2Fixture);
+      const available = await callMetadataV2As(user).getAvailableSeries();
+
+      expect(available).to.have.lengthOf(3);
+
+      expect(available[0]).to.equal(wagmiId);
+      expect(available[1]).to.equal(uniqueId);
+      expect(available[2]).to.equal(ogId);
+    });
+
+    it("Gets logo correctly", async function () {
+      const { operator, user, callMetadataV2As, wagmiId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const wagmi = await callMetadataV2As(user).getSeries(wagmiId);
+
+      validateSvg(wagmi.logoSvg);
+    });
+
+    it("Gets price correctly", async function () {
+      const { user, callMetadataV2As, wagmiId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const wagmi = await callMetadataV2As(user).getSeries(wagmiId);
+
+      expect(wagmi.priceInGwei).to.equal(1337n * 10n ** 4n);
+    });
+
+    it("Sets price correctly", async function () {
+      const { operator, user, callMetadataV2As, wagmiId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await (await callMetadataV2As(operator).setPriceInGwei(wagmiId, 42n)).wait();
+
+      const wagmi = await callMetadataV2As(user).getSeries(wagmiId);
+
+      expect(wagmi.priceInGwei).to.equal(42n);
+    });
+
+    it("Reverts on setting price for non-existent series", async function () {
+      const { operator, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await expect(callMetadataV2As(operator).setPriceInGwei(42n, 42n)).to.be.revertedWith("Invalid series index");
+    });
+
+    it("Reverts on setting price for non-operator", async function () {
+      const { user, callMetadataV2As, wagmiId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await expect(callMetadataV2As(user).setPriceInGwei(wagmiId, 42n)).to.be.reverted;
+    });
   });
 });
