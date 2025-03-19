@@ -5,7 +5,10 @@ import NeuBaseContract from "../scripts/interfaces/neu.model";
 import { Account, ChainType, ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
 
-async function deployContracts({ isTest } : { isTest?: boolean } = {}
+async function deployContracts({ isTest, forceOperations } : {
+  isTest?: boolean,
+  forceOperations?: boolean,
+} = {}
 ): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
@@ -21,7 +24,7 @@ async function deployContracts({ isTest } : { isTest?: boolean } = {}
   const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
   const Lock = await ethers.getContractFactory("NeuDaoLockV1");
 
-  let operatorSigner = chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
+  let operatorSigner = forceOperations || chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
 
   console.log('---');
 
