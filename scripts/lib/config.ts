@@ -11,12 +11,12 @@ export enum Chain {
 }
 
 export enum Contract {
-  neu = 'Neu',
-  storage = 'NeuStorage',
-  metadata = 'NeuMetadata',
-  logo = 'NeuLogo',
-  entitlement = 'NeuEntitlement',
-  lock = 'NeuDaoLock',
+  neu = 'NeuV2',
+  storage = 'NeuStorageV2',
+  metadata = 'NeuMetadataV2',
+  logo = 'NeuLogoV2',
+  entitlement = 'NeuEntitlementV1',
+  lock = 'NeuDaoLockV1',
 }
 
 export enum ChainType {
