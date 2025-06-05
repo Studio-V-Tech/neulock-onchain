@@ -1,15 +1,13 @@
 import { ethers, upgrades } from "hardhat";
 import { BaseContract } from "ethers";
 import traitMetadataUri from "./trait-metadata-uri";
+import NeuBaseContract from "../scripts/interfaces/neu.model";
 import { Account, ChainType, ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
-import NeuBaseContract from "./interfaces/neu.model";
-import StorageBaseContract from "./interfaces/storage.model";
 
-async function deployContracts({ isTest, forceOperations, forceReinitializers } : {
+async function deployContracts({ isTest, forceOperations } : {
   isTest?: boolean,
   forceOperations?: boolean,
-  forceReinitializers?: boolean,
 } = {}
 ): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
   const chain = await getChain(ethers.provider);
@@ -19,15 +17,14 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   const upgraderAddress = ChainTypeAccount[chainType][Account.upgrader];
   const operatorAddress = ChainTypeAccount[chainType][Account.operator];
 
-  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV3" : "NeuV3");
-  const Metadata = await ethers.getContractFactory("NeuMetadataV3");
-  const Storage = await ethers.getContractFactory("NeuStorageV3");
+  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV2" : "NeuV2");
+  const Metadata = await ethers.getContractFactory("NeuMetadataV2");
+  const Storage = await ethers.getContractFactory("NeuStorageV2");
   const Logo = await ethers.getContractFactory("NeuLogoV2");
   const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
   const Lock = await ethers.getContractFactory("NeuDaoLockV1");
 
   const operatorSigner = forceOperations || chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
-  const reinitializersSigner = forceReinitializers || chainType === ChainType.local ? await ethers.getSigner(upgraderAddress) : null;
 
   console.log('---');
 
@@ -74,6 +71,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     adminAddress,
     upgraderAddress,
     neuAddress,
+    entitlementAddress,
   ]);
 
   await storage.waitForDeployment();
@@ -95,23 +93,6 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   console.log(`Neulock Metadata deployed at:    ${metadataAddress}`);
 
   console.log('---');
-
-  if (reinitializersSigner) {
-    const neuRunner = neu.connect(reinitializersSigner) as NeuBaseContract;
-
-    await (await neuRunner.initializeV2(lockAddress as `0x${string}`)).wait();
-    console.log('Reinitialized Neu V2: DAO Lock contract set on NEU token');
-
-    const storageRunner = storage.connect(reinitializersSigner) as StorageBaseContract;
-
-    await (await storageRunner.initializeV2(entitlementAddress as `0x${string}`)).wait();
-
-    console.log('Reinitialized Storage V2: Entitlement contract set on Storage');
-    console.log('---');
-  } else {
-    console.log('IMPORTANT: Run reinitializers for Storage V2 and Neu V2 now!');
-    console.log('---');
-  }
 
   if (operatorSigner) {
     const neuRunner = neu.connect(operatorSigner) as NeuBaseContract;

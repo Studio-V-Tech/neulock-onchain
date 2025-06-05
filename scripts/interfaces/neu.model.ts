@@ -4,6 +4,7 @@ import AccessControl from "./lib/access-control.model";
 import UUPSUpgradeable from "./lib/uups-upgradeable.model";
 
 interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
+  initializeV2(lockContract: `0x${string}`): Promise<ContractTransactionResponse>;
   ownerOf(token: bigint): Promise<`0x${string}`>;
   totalSupply(): Promise<bigint>;
   balanceOf(account: `0x${string}`): Promise<bigint>;

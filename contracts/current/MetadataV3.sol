@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import {Series, TokenMetadata, INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
+import {Series, TokenMetadata, INeuMetadataV3} from "../interfaces/INeuMetadataV3.sol";
 import {NeuLogoV2} from "./LogoV2.sol";
 import {Bytes8Utils} from "../lib/Utils.sol";
 
@@ -16,13 +16,13 @@ using Bytes8Utils for bytes8;
 using Strings for uint256;
 using SafeCast for uint256;
 
-contract NeuMetadataV2 is
+contract NeuMetadataV3 is
     Initializable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    INeuMetadataV2
+    INeuMetadataV3
 {
-    uint256 private constant VERSION = 2;
+    uint256 private constant VERSION = 3;
 
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
     bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");

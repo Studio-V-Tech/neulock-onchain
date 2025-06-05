@@ -1,7 +1,7 @@
 import { ContractTransactionResponse } from "ethers";
 
 interface UUPSUpgradeable {
-  proxiableUUID(): Promise<Uint8Array>;
+  proxiableUUID(): Promise<string>;
   upgradeToAndCall(newImplementation: `0x${string}`, data: Uint8Array): Promise<ContractTransactionResponse>;
 }
 

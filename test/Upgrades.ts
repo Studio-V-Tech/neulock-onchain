@@ -17,6 +17,9 @@ import {
   upgradeToStorageV2Fixture,
   upgradeToNeuV2Fixture,
   upgradeToMetadataV2Fixture,
+  upgradeToNeuV3Fixture,
+  upgradeToMetadataV3Fixture,
+  upgradeToStorageV3Fixture,
 } from "./lib/upgrade-fixtures";
 
 describe("Upgrades", function () {
@@ -559,5 +562,54 @@ describe("Upgrades", function () {
 
       await expect(callMetadataV2As(user).setPriceInGwei(wagmiId, 42n)).to.be.reverted;
     });
+  });
+
+  describe("Neu V3 upgrade", function () {
+    it("Upgrades Neu to V3", async function () {
+      const { neuV3 } = await loadFixture(upgradeToNeuV3Fixture);
+
+      expect(await neuV3.getAddress()).to.be.properAddress;
+    });
+  });
+
+  describe("Metadata V3 upgrade", function () {
+    it("Upgrades Metadata to V3", async function () {
+      const { metadataV3 } = await loadFixture(upgradeToMetadataV3Fixture);
+
+      expect(await metadataV3.getAddress()).to.be.properAddress;
+    });
+  });
+
+  describe("Storage V3 upgrade", function () {
+    it("Upgrades Storage to V3", async function () {
+      const { storageV3 } = await loadFixture(upgradeToStorageV3Fixture);
+
+      expect(await storageV3.getAddress()).to.be.properAddress;
+    });
+
+    it("Retrieves data correctly after upgrade", async function () {
+      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV3Fixture);
+
+      expect(await callStorageV3As(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[1]);
+      expect(await callStorageV3As(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
+      expect(await callStorageV3As(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[3]);
+      expect(await callStorageV3As(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
+      expect(await callStorageV3As(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+    });
+
+    it("Updates data correctly after upgrade", async function () {
+      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV3Fixture);
+
+      await expect(callStorageV3As(user).saveData(100001n, userDataBytesArray[5])).not.to.be.reverted;
+      await expect(callStorageV3As(user3).saveData(0n, userDataBytesArray[1])).not.to.be.reverted;
+      await expect(callStorageV3As(user5).saveData(100001n, userDataBytesArray[3])).not.to.be.reverted;
+
+      expect(await callStorageV3As(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+      expect(await callStorageV3As(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
+      expect(await callStorageV3As(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[1]);
+      expect(await callStorageV3As(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
+      expect(await callStorageV3As(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[3]);
+    });
+
   });
 });
