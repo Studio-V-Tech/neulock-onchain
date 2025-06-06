@@ -247,8 +247,7 @@ contract NeuMetadataV3 is
                     continue;
                 }
 
-                // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
-                if (block.timestamp - metadata.mintedAt > REFUND_WINDOW) {
+                if (!_isInRefundWindow(metadata)) {
                     // All tokens before this one in the series are also expired
                     break;
                 }
@@ -264,8 +263,7 @@ contract NeuMetadataV3 is
         TokenMetadata memory metadata = _tokenMetadata[tokenId];
 
         require(metadata.originalPriceInGwei > 0, "Token is not refundable");
-        // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
-        require(block.timestamp - metadata.mintedAt < REFUND_WINDOW, "Refund window has passed");
+        require(_isInRefundWindow(metadata), "Refund window has passed");
 
         return metadata.originalPriceInGwei * 1e9;
     }
@@ -420,6 +418,11 @@ contract NeuMetadataV3 is
         _traitMetadataURI = uri;
 
         emit MetadataURIUpdated(uri);
+    }
+
+    function _isInRefundWindow(TokenMetadata memory metadata) private view returns (bool) {
+        // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
+        return block.timestamp - metadata.mintedAt <= REFUND_WINDOW;
     }
 
     function _authorizeUpgrade(address newImplementation)
