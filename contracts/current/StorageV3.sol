@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import {INeuStorageV3} from "../interfaces/INeuStorageV3.sol";
-import {INeuV1, INeuTokenV1} from "../interfaces/INeuV1.sol";
-import {INeuEntitlementV1} from "../interfaces/IEntitlementV1.sol";
+import {INeuV3, INeuTokenV3} from "../interfaces/INeuV3.sol";
+import {INeuEntitlementV2} from "../interfaces/IEntitlementV2.sol";
 
 contract NeuStorageV3 is
     Initializable,
@@ -21,9 +21,9 @@ contract NeuStorageV3 is
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    INeuTokenV1 private _neuContract;
+    INeuTokenV3 private _neuContract;
     mapping(address => bytes) private _userdata;
-    INeuEntitlementV1 private _entitlementContract;
+    INeuEntitlementV2 private _entitlementContract;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -41,13 +41,13 @@ contract NeuStorageV3 is
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(UPGRADER_ROLE, upgrader);
 
-        _neuContract = INeuTokenV1(neuContractAddress);
+        _neuContract = INeuTokenV3(neuContractAddress);
 
         emit InitializedStorage(VERSION, defaultAdmin, upgrader, neuContractAddress);
     }
 
     function initializeV2(address entitlementContractAddress) public reinitializer(2) onlyRole(UPGRADER_ROLE) {
-        _entitlementContract = INeuEntitlementV1(entitlementContractAddress);
+        _entitlementContract = INeuEntitlementV2(entitlementContractAddress);
 
         emit InitializedStorageV2(entitlementContractAddress);
     }

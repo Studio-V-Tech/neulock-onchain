@@ -405,6 +405,12 @@ describe("Neu", function () {
   });
 
   describe("Token metadata", function () {
+    it("Reverts on setting metadata contract when already set", async function () {
+      const { operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(operator).setMetadataContract(operator.address as `0x${string}`)).to.be.revertedWith("Metadata contract already set");
+    });
+
     it("Gets token metadata correctly", async function () {
       const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
 

@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {INeuDaoLockV1} from "../interfaces/ILockV1.sol";
-import {INeuV2, INeuTokenV2} from "../interfaces/INeuV2.sol";
+import {INeuV3, INeuTokenV3} from "../interfaces/INeuV3.sol";
 
 /**
  * @dev NeuDaoLock locks Ether donated from Neulock's sponsors until the
@@ -22,7 +22,7 @@ import {INeuV2, INeuTokenV2} from "../interfaces/INeuV2.sol";
 contract NeuDaoLockV1 is AccessControl, INeuDaoLockV1 {
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     uint256 public constant REQUIRED_KEY_TOKENS = 7;
-    INeuTokenV2 immutable private _neuContract;
+    INeuTokenV3 immutable private _neuContract;
 
     address public neuDaoAddress;
     uint256[] public keyTokenIds;
@@ -35,7 +35,7 @@ contract NeuDaoLockV1 is AccessControl, INeuDaoLockV1 {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(OPERATOR_ROLE, operator);
 
-        _neuContract = INeuTokenV2(neuContractAddress);
+        _neuContract = INeuTokenV3(neuContractAddress);
     }
 
     function setNeuDaoAddress(address newNeoDaoAddress) external onlyRole(OPERATOR_ROLE) {

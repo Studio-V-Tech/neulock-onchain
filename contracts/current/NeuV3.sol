@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {IERC7496} from "../interfaces/IERC7496.sol";
-import {INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
+import {INeuMetadataV3} from "../interfaces/INeuMetadataV3.sol";
 import {INeuV3} from "../interfaces/INeuV3.sol";
 import {INeuDaoLockV1} from "../interfaces/ILockV1.sol";
 
@@ -37,7 +37,7 @@ contract NeuV3 is
     uint256 private constant GWEI = 1e9;
 
     uint256 public weiPerSponsorPoint;
-    INeuMetadataV2 private _neuMetadata;
+    INeuMetadataV3 private _neuMetadata;
     INeuDaoLockV1 private _neuDaoLock;
 
     uint96 private constant _ROYALTY_BASE_POINTS = 1000; // 10%
@@ -114,7 +114,9 @@ contract NeuV3 is
     }
 
     function setMetadataContract(address newMetadataContract) external onlyRole(OPERATOR_ROLE) {
-        _neuMetadata = INeuMetadataV2(newMetadataContract);
+        require(address(_neuMetadata) == address(0), "Metadata contract already set");
+
+        _neuMetadata = INeuMetadataV3(newMetadataContract);
 
         emit MetadataContractUpdated(newMetadataContract);
     }
