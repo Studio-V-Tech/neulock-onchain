@@ -36,6 +36,8 @@ contract NeuMetadataV3 is
     uint16[] private _availableSeries;
     NeuLogoV2 private _logo;
 
+    mapping(uint256 => uint256) private _seriesRefundableTail; // seriesIndex => lastTokenId for refund purposes
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -62,6 +64,12 @@ contract NeuMetadataV3 is
         emit InitializedMetadata(VERSION, defaultAdmin, upgrader, operator, neuContract, logoContract);
     }
 
+    function initializeV3() public reinitializer(3) onlyRole(UPGRADER_ROLE) {
+        for (uint16 i = 0; i < _series.length; i++) {
+            _setSeriesRefundableTailOnBurn(i, _series[i].firstToken + _series[i].maxTokens);
+        }
+    }
+
     function createTokenMetadata(uint16 seriesIndex, uint256 originalPrice) external onlyRole(NEU_ROLE) returns (
         uint256 tokenId,
         bool governance
@@ -84,6 +92,11 @@ contract NeuMetadataV3 is
         }
 
         governance = _givesGovernanceAccess(seriesIndex);
+
+        if (originalPrice > 0) {
+            _seriesRefundableTail[seriesIndex] = tokenId;
+            emit SeriesRefundableTailSet(seriesIndex, tokenId);
+        }
     }
 
     function deleteTokenMetadata(uint256 tokenId) external onlyRole(NEU_ROLE) {
@@ -94,7 +107,34 @@ contract NeuMetadataV3 is
         _series[seriesIndex].burntTokens++;
         delete _tokenMetadata[tokenId];
 
+        if (_seriesRefundableTail[seriesIndex] == tokenId) {
+            _setSeriesRefundableTailOnBurn(seriesIndex, tokenId);
+        }
+
         emit TokenMetadataDeleted(tokenId);
+    }
+
+    function _setSeriesRefundableTailOnBurn(uint16 seriesIndex, uint256 burnedTokenId) internal {
+        // If we don't find a new tail, series doesn't have any refundable tokens
+        _seriesRefundableTail[seriesIndex] = 0;
+
+        uint256 firstToken = _series[seriesIndex].firstToken;
+
+        for (uint256 i = burnedTokenId - 1; i >= firstToken; i--) {
+            if (!_metadataExists(i)) { // Token has been burned
+                continue;
+            }
+            if (!_isInRefundWindow(_tokenMetadata[i])) {
+                // All tokens before this one in the series are also expired
+                break;
+            }
+            if (_tokenMetadata[i].originalPriceInGwei > 0) {
+                _seriesRefundableTail[seriesIndex] = i;
+                break;
+            }
+        }
+
+        emit SeriesRefundableTailSet(seriesIndex, _seriesRefundableTail[seriesIndex]);
     }
 
     function setTraitMetadataURI(string calldata uri) external onlyRole(NEU_ROLE) {
@@ -136,8 +176,9 @@ contract NeuMetadataV3 is
     }
 
     function addSeries(bytes8 name, uint64 priceInGwei, uint32 firstToken, uint32 maxTokens, uint16 fgColorRGB565, uint16 bgColorRGB565, uint16 accentColorRGB565, bool makeAvailable) external onlyRole(OPERATOR_ROLE) returns (uint16) {
-        require(maxTokens > 0, "maxTokens must be greater than 0");
-        require(priceInGwei > 0, "Price must be greater than 0");
+        require(maxTokens > 0, "maxTokens cannot be 0");
+        require(priceInGwei > 0, "Price cannot be 0");
+        require(firstToken > 0, "FirstToken cannot be 0");
 
         uint16 seriesIndex = uint16(_series.length);
         uint256 maxToken = firstToken + maxTokens - 1;
@@ -227,7 +268,7 @@ contract NeuMetadataV3 is
 
     function setPriceInGwei(uint16 seriesIndex, uint64 price) external onlyRole(OPERATOR_ROLE) {
         require(seriesIndex < _series.length, "Invalid series index");
-        require(price > 0, "Price must be greater than 0");
+        require(price > 0, "Price cannot be 0");
 
         _series[seriesIndex].priceInGwei = price;
 
@@ -245,7 +286,7 @@ contract NeuMetadataV3 is
         uint256 seriesLength = _series.length;
 
         for (uint16 s = 0; s < seriesLength; s++) {
-            for (uint256 i = _series[s].firstToken + _series[s].mintedTokens - 1; i >= _series[s].firstToken; i--) {
+            for (uint256 i = _seriesRefundableTail[s]; i >= _series[s].firstToken; i--) {
                 TokenMetadata memory metadata = _tokenMetadata[i];
 
                 if (!_metadataExists(i)) {

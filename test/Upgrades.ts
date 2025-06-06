@@ -592,6 +592,16 @@ describe("Upgrades", function () {
 
       expect(await metadataV3.getAddress()).to.be.properAddress;
     });
+
+    it("Calculates refundable sum correctly after upgrade", async function () {
+      const v2Values = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const v2Sum = await v2Values.callMetadataV2As(v2Values.user).sumAllRefundableTokensValue();
+
+      const { callMetadataV3As, user } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await callMetadataV3As(user).sumAllRefundableTokensValue()).to.equal(v2Sum);
+    });
   });
 
   describe("Storage V3 upgrade", function () {

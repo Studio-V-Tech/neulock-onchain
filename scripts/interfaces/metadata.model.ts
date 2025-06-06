@@ -22,6 +22,7 @@ interface MetadataBaseContract extends BaseContract, AccessControl, UUPSUpgradea
   sumAllRefundableTokensValue(): Promise<bigint>;
   tokenURI(tokenId: bigint): Promise<string>;
   setLogoContract(logoContract: `0x${string}`): Promise<ContractTransactionResponse>;
+  initializeV3(): Promise<ContractTransactionResponse>;
 }
 
 export default MetadataBaseContract;

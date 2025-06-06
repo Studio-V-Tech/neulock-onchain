@@ -5,6 +5,7 @@ import { Account, ChainType, ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
 import NeuBaseContract from "./interfaces/neu.model";
 import StorageBaseContract from "./interfaces/storage.model";
+import MetadataBaseContract from "./interfaces/metadata.model";
 
 async function deployContracts({ isTest, forceOperations, forceReinitializers } : {
   isTest?: boolean,
@@ -108,11 +109,16 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     const storageRunner = storage.connect(reinitializersSigner) as StorageBaseContract;
 
     await (await storageRunner.initializeV2(entitlementAddress as `0x${string}`)).wait();
-
     console.log('Reinitialized Storage V2: Entitlement contract set on Storage');
+
+    const metadataRunner = (metadata as BaseContract).connect(reinitializersSigner) as MetadataBaseContract;
+
+    await (await metadataRunner.initializeV3()).wait();
+    console.log('Reinitialized Metadata V3: Series tail set on Metadata');
+
     console.log('---');
   } else {
-    console.log('IMPORTANT: Run reinitializers for Storage V2; and Neu V2 and V3 now!');
+    console.log('IMPORTANT: Run reinitializers for Storage V2; Metadata V3; and Neu V2 and V3 now!');
     console.log('---');
   }
 

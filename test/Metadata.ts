@@ -1,7 +1,10 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import {
+  loadFixture,
+  time,
+} from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 
-import { TokenMetadata, stringToBytes, bytesToString, getRoles, validateTokenMetadataCommonAttributes, validateSvg } from "../scripts/lib/utils";
+import { TokenMetadata, stringToBytes, bytesToString, getRoles, validateTokenMetadataCommonAttributes, validateSvg, day } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
@@ -106,13 +109,13 @@ describe("Metadata", function () {
     it("Reverts when adding series with maxTokens = 0", async function () {
       const { operator, callMetadataAs } = await loadFixture(setSeriesFixture);
 
-      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100000n, 0n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("maxTokens must be greater than 0");
+      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100000n, 0n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("maxTokens cannot be 0");
     });
 
     it("Reverts when adding series with price = 0", async function () {
       const { operator, callMetadataAs } = await loadFixture(setSeriesFixture);
 
-      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 0n, 100000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("Price must be greater than 0");
+      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 0n, 100000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("Price cannot be 0");
     });
 
     it("Gets availability correctly", async function () {
@@ -199,9 +202,9 @@ describe("Metadata", function () {
     });
 
     it("Reverts on setting price to 0", async function () {
-      const { operator, user, callMetadataAs, wagmiId } = await loadFixture(setSeriesFixture);
+      const { operator, callMetadataAs, wagmiId } = await loadFixture(setSeriesFixture);
 
-      await expect(callMetadataAs(operator).setPriceInGwei(wagmiId, 0n)).to.be.revertedWith("Price must be greater than 0");
+      await expect(callMetadataAs(operator).setPriceInGwei(wagmiId, 0n)).to.be.revertedWith("Price cannot be 0");
     });
   });
 
@@ -298,6 +301,23 @@ describe("Metadata", function () {
       await expect(callMetadataAs(operator).setSeriesAvailability(wagmiId, false)).to.be.reverted;
       await expect(callMetadataAs(user).setSeriesAvailability(wagmiId, false)).not.to.be.reverted;
     });
+  });
+
+  describe("Series refunding tail", function () {
+    it("Sets tail to a previous refundable token when burning the current tail", async function () {
+      const { user3, callNeuAs, ogId, metadata } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(user3).burn(4n)).to.emit(metadata, "SeriesRefundableTailSet").withArgs(ogId, 3n);
+    });
+
+    it("Sets tail to zero when burning the current tail and no refundable tokens are left", async function () {
+      const { user3, callNeuAs, ogId, metadata } = await loadFixture(purchasedTokensFixture);
+
+      await time.increase(7 * day);
+
+      await expect(callNeuAs(user3).burn(4n)).to.emit(metadata, "SeriesRefundableTailSet").withArgs(ogId, 0n);
+    });
+
   });
 
   describe("Access control", accessControlTestFactory(AccessControlSupportedContracts.Metadata));

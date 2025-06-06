@@ -199,7 +199,12 @@ export async function upgradeToV3Fixture() {
   const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
   const metadataAddress = await metadataV2.getAddress();
 
-  const metadataV3 = await upgrades.upgradeProxy(metadataAddress, MetadataV3);
+  const metadataV3 = await upgrades.upgradeProxy(metadataAddress, MetadataV3, {
+    call: {
+      fn: 'initializeV3',
+      args: [],
+    },
+  });
 
   const callMetadataV3As = (runner: HardhatEthersSigner) => setMetadataCallerFactory(metadataV3, runner);
 
