@@ -28,7 +28,7 @@ contract NeuV3 is
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    uint256 private constant VERSION = 3;
+    uint256 private constant _VERSION = 3;
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -40,7 +40,10 @@ contract NeuV3 is
     INeuMetadataV2 private _neuMetadata;
     INeuDaoLockV1 private _neuDaoLock;
 
-    uint96 private constant RoyaltyBasePoints = 1000; // 10%
+    uint96 private constant _ROYALTY_BASE_POINTS = 1000; // 10%
+    uint256 private constant _ENTITLEMENT_COOLDOWN_SECONDS = 1 weeks;
+
+    mapping(uint256 => uint256) public entitlementAfterTimestamps;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -67,7 +70,7 @@ contract NeuV3 is
 
         weiPerSponsorPoint = 1e14; // 0.0001 ETH
 
-        emit InitializedNeu(VERSION, defaultAdmin, upgrader, operator);
+        emit InitializedNeu(_VERSION, defaultAdmin, upgrader, operator);
     }
 
     function initializeV2(address payable neuDaoLockAddress) public reinitializer(2) onlyRole(UPGRADER_ROLE) {
@@ -79,7 +82,7 @@ contract NeuV3 is
     }
 
     function initializeV3(address royaltyReceiver) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
-        _setDefaultRoyalty(royaltyReceiver, RoyaltyBasePoints);
+        _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
 
         emit InitializedNeuV3(royaltyReceiver);
     }
@@ -276,15 +279,38 @@ contract NeuV3 is
     }
 
     function setRoyaltyReceiver(address royaltyReceiver) external onlyRole(OPERATOR_ROLE) {
-        _setDefaultRoyalty(royaltyReceiver, RoyaltyBasePoints);
+        _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
 
         emit RoyaltyReceiverUpdated(royaltyReceiver);
+    }
+    
+    function _setEntitlementDate(uint256 tokenId) internal {
+        if (block.timestamp >= entitlementAfterTimestamps[tokenId] + _ENTITLEMENT_COOLDOWN_SECONDS) {
+            // Token transferred for the first time or entitlement active for more than a week.
+            // Give entitlement to new owner.
+            // Add 1 second to disallow flashloans even if token has not been transferred for more than a week
+            entitlementAfterTimestamps[tokenId] = block.timestamp + 1;
+        } else if (block.timestamp >= entitlementAfterTimestamps[tokenId]) {
+            // Entitlement active for less than a week.
+            // New owner will get entitlement a week after entitlement last started.
+            entitlementAfterTimestamps[tokenId] += _ENTITLEMENT_COOLDOWN_SECONDS;
+        }
+        // In cooldown period. Don't change it.
     }
 
     // The following functions are overrides required by Solidity.
 
     function _update(address to, uint256 tokenId, address auth) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) returns (address) {
-        return super._update(to, tokenId, auth);
+        address from = super._update(to, tokenId, auth);
+
+        if (to == address(0)) {
+            delete entitlementAfterTimestamps[tokenId];
+        } else if (from != address(0)) {
+            // Leave entitlement date as 0 for mints, to allow mint + transfer (gifting) with immediate entitlement
+            _setEntitlementDate(tokenId);
+        }
+
+        return from;
     }
 
     function _increaseBalance(address account, uint128 value) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {

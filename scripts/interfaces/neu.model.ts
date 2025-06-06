@@ -2,8 +2,9 @@ import { BaseContract, ContractTransactionResponse } from "ethers";
 
 import AccessControl from "./lib/access-control.model";
 import UUPSUpgradeable from "./lib/uups-upgradeable.model";
+import ERC721Enumerable from "./lib/erc721-enumerable.model";
 
-interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
+interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable, ERC721Enumerable {
   initializeV2(lockContract: `0x${string}`): Promise<ContractTransactionResponse>;
   initializeV3(royaltyReceiver: `0x${string}`): Promise<ContractTransactionResponse>;
   ownerOf(token: bigint): Promise<`0x${string}`>;
@@ -37,6 +38,7 @@ interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   setDaoLockContract(newDaoLockContract: `0x${string}`): Promise<ContractTransactionResponse>;
   isGovernanceToken(tokenId: bigint): Promise<boolean>;
   setRoyaltyReceiver(royaltyReceiver: `0x${string}`): Promise<ContractTransactionResponse>;
+  entitlementAfterTimestamps(tokenId: bigint): Promise<bigint>;
 }
 
 export default NeuBaseContract;

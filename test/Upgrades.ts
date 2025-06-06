@@ -17,9 +17,7 @@ import {
   upgradeToStorageV2Fixture,
   upgradeToNeuV2Fixture,
   upgradeToMetadataV2Fixture,
-  upgradeToNeuV3Fixture,
-  upgradeToMetadataV3Fixture,
-  upgradeToStorageV3Fixture,
+  upgradeToV3Fixture,
 } from "./lib/upgrade-fixtures";
 
 describe("Upgrades", function () {
@@ -566,7 +564,7 @@ describe("Upgrades", function () {
 
   describe("Neu V3 upgrade", function () {
     it("Upgrades Neu to V3", async function () {
-      const { neuV3 } = await loadFixture(upgradeToNeuV3Fixture);
+      const { neuV3 } = await loadFixture(upgradeToV3Fixture);
 
       expect(await neuV3.getAddress()).to.be.properAddress;
     });
@@ -579,7 +577,7 @@ describe("Upgrades", function () {
       expect(v2Results[0]).to.equal(await v2Params.neuV2.getAddress() as `0x${string}`);
       expect(v2Results[1]).to.equal(10n ** 8n);
 
-      const { user, operator, callNeuV3As } = await loadFixture(upgradeToNeuV3Fixture);
+      const { user, operator, callNeuV3As } = await loadFixture(upgradeToV3Fixture);
 
       const [recipient, value] = await callNeuV3As(user).royaltyInfo(1n, 10n ** 9n);
 
@@ -590,7 +588,7 @@ describe("Upgrades", function () {
 
   describe("Metadata V3 upgrade", function () {
     it("Upgrades Metadata to V3", async function () {
-      const { metadataV3 } = await loadFixture(upgradeToMetadataV3Fixture);
+      const { metadataV3 } = await loadFixture(upgradeToV3Fixture);
 
       expect(await metadataV3.getAddress()).to.be.properAddress;
     });
@@ -598,13 +596,13 @@ describe("Upgrades", function () {
 
   describe("Storage V3 upgrade", function () {
     it("Upgrades Storage to V3", async function () {
-      const { storageV3 } = await loadFixture(upgradeToStorageV3Fixture);
+      const { storageV3 } = await loadFixture(upgradeToV3Fixture);
 
       expect(await storageV3.getAddress()).to.be.properAddress;
     });
 
     it("Retrieves data correctly after upgrade", async function () {
-      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV3Fixture);
+      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToV3Fixture);
 
       expect(await callStorageV3As(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[1]);
       expect(await callStorageV3As(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
@@ -614,7 +612,7 @@ describe("Upgrades", function () {
     });
 
     it("Updates data correctly after upgrade", async function () {
-      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToStorageV3Fixture);
+      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToV3Fixture);
 
       await expect(callStorageV3As(user).saveData(100001n, userDataBytesArray[5])).not.to.be.reverted;
       await expect(callStorageV3As(user3).saveData(0n, userDataBytesArray[1])).not.to.be.reverted;
@@ -627,5 +625,24 @@ describe("Upgrades", function () {
       expect(await callStorageV3As(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[3]);
     });
 
+  });
+
+  describe("Entitlement V2 upgrade", function () {
+    it("Upgrades Entitlement to V2", async function () {
+      const { entitlementV2 } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await entitlementV2.getAddress()).to.be.properAddress;
+    });
+
+    it("Storage remains consistent after upgrade", async function () {
+      const { neuV3, callEntitlementV2As, user } = await loadFixture(upgradeToV3Fixture);
+
+      const userAddress = user.address as `0x${string}`;
+
+      const entitlements = await callEntitlementV2As(user).userEntitlementContracts(userAddress);
+
+      expect(entitlements).to.have.lengthOf(1);
+      expect(entitlements[0]).to.equal(await neuV3.getAddress());
+    });
   });
 });

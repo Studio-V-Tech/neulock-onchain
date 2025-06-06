@@ -56,7 +56,7 @@ export async function deployContractsFixture({ isTest = false } = {}) {
     return contract.connect(runner) as EntitlementBaseContract;
   }
 
-  const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
+  const Entitlement = await ethers.getContractFactory("NeuEntitlementV2");
   const entitlement = Entitlement.attach(await entitlementDeployment.getAddress());
 
   const callEntitlementAs = (runner: HardhatEthersSigner) => setEntitlementCallerFactory(entitlement, runner);
@@ -85,6 +85,19 @@ export async function setSeriesFixture() {
   await (await callMetadataAs(operator).addSeries(stringToBytes('UNIQUE'), 1n, 101n, 1n, 58328n, 6279n, 65153n, true)).wait();
 
   return { neu, metadata, storage, entitlement, lock, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs, neuDeployment, wagmiId: 0n, ogId: 1n, uniqueId: 2n };
+}
+
+export async function purchasedOneTokenFixture() {
+  const { neu, metadata, storage, entitlement, lock, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs, neuDeployment, wagmiId, ogId, uniqueId } = await loadFixture(setSeriesFixture);
+
+  await (await callMetadataAs(operator).setSeriesAvailability(ogId, true)).wait();
+
+  const og = await callMetadataAs(user).getSeries(ogId);
+
+  // User - WAGMI #100001 - Day 0
+  await (await callNeuAs(user).safeMintPublic(ogId, { value: seriesValue(og) })).wait();
+
+  return { neu, metadata, storage, entitlement, lock, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs, neuDeployment, wagmiId, ogId, uniqueId };
 }
 
 export async function purchasedTokensFixture() {

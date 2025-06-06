@@ -23,7 +23,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   const Metadata = await ethers.getContractFactory("NeuMetadataV3");
   const Storage = await ethers.getContractFactory("NeuStorageV3");
   const Logo = await ethers.getContractFactory("NeuLogoV2");
-  const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
+  const Entitlement = await ethers.getContractFactory("NeuEntitlementV2");
   const Lock = await ethers.getContractFactory("NeuDaoLockV1");
 
   const operatorSigner = forceOperations || chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;

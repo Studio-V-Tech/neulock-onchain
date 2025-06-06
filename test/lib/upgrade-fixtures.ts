@@ -181,7 +181,7 @@ export async function upgradeToMetadataV2Fixture() {
   return { neuV2, metadataV2, storageV2, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV2As, callMetadataV2As, callLockV1As, callStorageV2As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal };
 }
 
-export async function upgradeToNeuV3Fixture() {
+export async function upgradeToV3Fixture() {
   const { neuV2, metadataV2, storageV2, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV2As, callMetadataV2As, callLockV1As, callStorageV2As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal } = await loadFixture(upgradeToMetadataV2Fixture);
 
   const NeuV3 = await ethers.getContractFactory("NeuV3", upgrader);
@@ -196,24 +196,12 @@ export async function upgradeToNeuV3Fixture() {
 
   const callNeuV3As = (runner: HardhatEthersSigner) => setNeuCallerFactory(neuV3, runner);
 
-  return { neuV3, metadataV2, storageV2, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV2As, callLockV1As, callStorageV2As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal };
-}
-
-export async function upgradeToMetadataV3Fixture() {
-  const { neuV3, metadataV2, storageV2, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV2As, callLockV1As, callStorageV2As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal } = await loadFixture(upgradeToNeuV3Fixture);
-
   const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
   const metadataAddress = await metadataV2.getAddress();
 
   const metadataV3 = await upgrades.upgradeProxy(metadataAddress, MetadataV3);
 
   const callMetadataV3As = (runner: HardhatEthersSigner) => setMetadataCallerFactory(metadataV3, runner);
-
-  return { neuV3, metadataV3, storageV2, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV3As, callLockV1As, callStorageV2As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal };
-}
-
-export async function upgradeToStorageV3Fixture() {
-  const { neuV3, metadataV3, storageV2, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV3As, callLockV1As, callStorageV2As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal } = await loadFixture(upgradeToMetadataV3Fixture);
 
   const StorageV3 = await ethers.getContractFactory("NeuStorageV3", upgrader);
   const storageAddress = await storageV2.getAddress();
@@ -222,5 +210,12 @@ export async function upgradeToStorageV3Fixture() {
 
   const callStorageV3As = (runner: HardhatEthersSigner) => setStorageCallerFactory(storageV3, runner);
 
-  return { neuV3, metadataV3, storageV3, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV3As, callLockV1As, callStorageV3As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal };
+  const EntitlementV2 = await ethers.getContractFactory("NeuEntitlementV2", upgrader);
+  const entitlementAddress = await entitlementV1.getAddress();
+
+  const entitlementV2 = await upgrades.upgradeProxy(entitlementAddress, EntitlementV2);
+
+  const callEntitlementV2As = (runner: HardhatEthersSigner) => setEntitlementCallerFactory(entitlementV2, runner);
+
+  return { neuV3, metadataV3, storageV3, entitlementV2, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV3As, callLockV1As, callStorageV3As, callEntitlementV2As, wagmiId, ogId, uniqueId, sponsorTransferTotal };
 }

@@ -648,9 +648,76 @@ describe("Neu", function () {
     });
 
     it("Reverts on setting royalty receiver for non-operators", async function () {
-      const { neu, user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
 
       await expect(callNeuAs(user).setRoyaltyReceiver(user.address as `0x${string}`)).to.be.reverted;
+    });
+  });
+
+  describe("Entitlement", function () {
+    it("Keeps entitlement after timestamp at zero upon minting", async function () {
+      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      const entitlementAfterTimestamp = await callNeuAs(user).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(0n);
+    });
+
+    it("Sets entitlement after timestamp correctly after first transfer", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      const timestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(timestamp + 1));
+    });
+
+    it("Sets entitlement after timestamp correctly after transfer less than a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+      const firstTransferTimestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      await time.increase(day);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(firstTransferTimestamp + 7 * day + 1));
+    });
+
+    it("Sets entitlement after timestamp correctly after transfer exactly a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      await time.increase(7 * day);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+      const timestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(timestamp + 1));
+    });
+
+    it("Sets entitlement after timestamp correctly after transfer more than a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      await time.increase(30 * day);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+      const timestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(timestamp + 1));
     });
   });
 
