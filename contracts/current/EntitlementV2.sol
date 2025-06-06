@@ -42,6 +42,7 @@ contract NeuEntitlementV2 is
 
         entitlementContracts.push(neuContract);
 
+        emit EntitlementContractAdded(neuContract);
         emit InitializedEntitlement(VERSION, defaultAdmin, upgrader, operator, neuContract);
     }
 

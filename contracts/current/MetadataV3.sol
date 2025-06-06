@@ -58,6 +58,7 @@ contract NeuMetadataV3 is
 
         _logo = NeuLogoV2(logoContract);
 
+        emit LogoUpdated(logoContract);
         emit InitializedMetadata(VERSION, defaultAdmin, upgrader, operator, neuContract, logoContract);
     }
 
