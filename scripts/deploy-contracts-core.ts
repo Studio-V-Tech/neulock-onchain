@@ -102,6 +102,9 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     await (await neuRunner.initializeV2(lockAddress as `0x${string}`)).wait();
     console.log('Reinitialized Neu V2: DAO Lock contract set on NEU token');
 
+    await (await neuRunner.initializeV3(operatorAddress as `0x${string}`)).wait();
+    console.log('Reinitialized Neu V3: Royalty receiver set on NEU token');
+
     const storageRunner = storage.connect(reinitializersSigner) as StorageBaseContract;
 
     await (await storageRunner.initializeV2(entitlementAddress as `0x${string}`)).wait();
@@ -109,7 +112,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     console.log('Reinitialized Storage V2: Entitlement contract set on Storage');
     console.log('---');
   } else {
-    console.log('IMPORTANT: Run reinitializers for Storage V2 and Neu V2 now!');
+    console.log('IMPORTANT: Run reinitializers for Storage V2; and Neu V2 and V3 now!');
     console.log('---');
   }
 

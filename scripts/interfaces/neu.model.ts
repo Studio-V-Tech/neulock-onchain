@@ -5,6 +5,7 @@ import UUPSUpgradeable from "./lib/uups-upgradeable.model";
 
 interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   initializeV2(lockContract: `0x${string}`): Promise<ContractTransactionResponse>;
+  initializeV3(royaltyReceiver: `0x${string}`): Promise<ContractTransactionResponse>;
   ownerOf(token: bigint): Promise<`0x${string}`>;
   totalSupply(): Promise<bigint>;
   balanceOf(account: `0x${string}`): Promise<bigint>;
@@ -35,6 +36,7 @@ interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   burn(tokenId: bigint): Promise<ContractTransactionResponse>;
   setDaoLockContract(newDaoLockContract: `0x${string}`): Promise<ContractTransactionResponse>;
   isGovernanceToken(tokenId: bigint): Promise<boolean>;
+  setRoyaltyReceiver(royaltyReceiver: `0x${string}`): Promise<ContractTransactionResponse>;
 }
 
 export default NeuBaseContract;

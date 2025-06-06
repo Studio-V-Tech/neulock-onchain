@@ -187,7 +187,12 @@ export async function upgradeToNeuV3Fixture() {
   const NeuV3 = await ethers.getContractFactory("NeuV3", upgrader);
   const neuAddress = await neuV2.getAddress();
 
-  const neuV3 = await upgrades.upgradeProxy(neuAddress, NeuV3);
+  const neuV3 = await upgrades.upgradeProxy(neuAddress, NeuV3, {
+    call: {
+      fn: 'initializeV3',
+      args: [operator.address],
+    },
+  });
 
   const callNeuV3As = (runner: HardhatEthersSigner) => setNeuCallerFactory(neuV3, runner);
 

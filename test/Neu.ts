@@ -623,12 +623,34 @@ describe("Neu", function () {
 
   describe("Royalty", function () {
     it("Gets proper royalty info", async function () {
-      const { neu, user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+      const { user, operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
 
       const [recipient, value] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
 
-      expect(recipient).to.equal(await neu.getAddress());
+      expect(recipient).to.equal(operator.address as `0x${string}`);
       expect(value).to.equal(10n ** 8n);
+    });
+
+    it("Sets royalty receiver", async function () {
+      const { neu, user, operator, admin, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      const [oldRecipient, oldValue] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(oldRecipient).to.equal(operator.address as `0x${string}`);
+      expect(oldValue).to.equal(10n ** 8n);
+
+      await expect(callNeuAs(operator).setRoyaltyReceiver(admin.address as `0x${string}`)).to.emit(neu, "RoyaltyReceiverUpdated").withArgs(admin.address as `0x${string}`);
+
+      const [newRecipient, newValue] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(newRecipient).to.equal(admin.address as `0x${string}`);
+      expect(newValue).to.equal(10n ** 8n);
+    });
+
+    it("Reverts on setting royalty receiver for non-operators", async function () {
+      const { neu, user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(user).setRoyaltyReceiver(user.address as `0x${string}`)).to.be.reverted;
     });
   });
 

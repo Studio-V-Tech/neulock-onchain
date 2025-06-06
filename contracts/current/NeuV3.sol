@@ -40,6 +40,8 @@ contract NeuV3 is
     INeuMetadataV2 private _neuMetadata;
     INeuDaoLockV1 private _neuDaoLock;
 
+    uint96 private constant RoyaltyBasePoints = 1000; // 10%
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -74,6 +76,12 @@ contract NeuV3 is
         _neuDaoLock = INeuDaoLockV1(neuDaoLockAddress);
 
         emit InitializedNeuV2(neuDaoLockAddress);
+    }
+
+    function initializeV3(address royaltyReceiver) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
+        _setDefaultRoyalty(royaltyReceiver, RoyaltyBasePoints);
+
+        emit InitializedNeuV3(royaltyReceiver);
     }
 
     function getTraitMetadataURI()
@@ -265,6 +273,12 @@ contract NeuV3 is
         _requireOwned(tokenId);
 
         return _neuMetadata.isGovernanceToken(tokenId);
+    }
+
+    function setRoyaltyReceiver(address royaltyReceiver) external onlyRole(OPERATOR_ROLE) {
+        _setDefaultRoyalty(royaltyReceiver, RoyaltyBasePoints);
+
+        emit RoyaltyReceiverUpdated(royaltyReceiver);
     }
 
     // The following functions are overrides required by Solidity.

@@ -25,7 +25,7 @@ export async function deployContractsFixture({ isTest = false } = {}) {
     isTest,
   });
 
-  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV2" : "NeuV2");
+  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV3" : "NeuV3");
   const neu = Neu.attach(await neuDeployment.getAddress());
 
   function setNeuCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): NeuBaseContract {
@@ -40,14 +40,14 @@ export async function deployContractsFixture({ isTest = false } = {}) {
 
   const callMetadataAs = (runner: HardhatEthersSigner) => setMetadataCallerFactory(metadata, runner);
 
-  const Metadata = await ethers.getContractFactory("NeuMetadataV2");
+  const Metadata = await ethers.getContractFactory("NeuMetadataV3");
   const metadata = Metadata.attach(await metadataDeployment.getAddress());
 
   function setStorageCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): StorageBaseContract {
     return contract.connect(runner) as StorageBaseContract;
   }
 
-  const Storage = await ethers.getContractFactory("NeuStorageV2");
+  const Storage = await ethers.getContractFactory("NeuStorageV3");
   const storage = Storage.attach(await storageDeployment.getAddress());
 
   const callStorageAs = (runner: HardhatEthersSigner) => setStorageCallerFactory(storage, runner);

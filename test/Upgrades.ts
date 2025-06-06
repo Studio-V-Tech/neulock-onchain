@@ -570,6 +570,22 @@ describe("Upgrades", function () {
 
       expect(await neuV3.getAddress()).to.be.properAddress;
     });
+
+    it("Gets proper royalty info after upgrade", async function () {
+      const v2Params = await loadFixture(upgradeToNeuV2Fixture);
+
+      const v2Results = await v2Params.callNeuV2As(v2Params.user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(v2Results[0]).to.equal(await v2Params.neuV2.getAddress() as `0x${string}`);
+      expect(v2Results[1]).to.equal(10n ** 8n);
+
+      const { user, operator, callNeuV3As } = await loadFixture(upgradeToNeuV3Fixture);
+
+      const [recipient, value] = await callNeuV3As(user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(recipient).to.equal(operator.address as `0x${string}`);
+      expect(value).to.equal(10n ** 8n);
+    });
   });
 
   describe("Metadata V3 upgrade", function () {
