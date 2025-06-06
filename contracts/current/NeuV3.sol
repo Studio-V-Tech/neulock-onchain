@@ -287,12 +287,15 @@ contract NeuV3 is
     }
     
     function _setEntitlementDate(uint256 tokenId) internal {
-        if (block.timestamp >= entitlementAfterTimestamps[tokenId] + _ENTITLEMENT_COOLDOWN_SECONDS) {
+        // slither-disable-next-line timestamp (with a granularity of days for the entitlement cooldown, we can tolerate miner manipulation)
+        uint256 blockTimestamp = block.timestamp;
+
+        if (blockTimestamp >= entitlementAfterTimestamps[tokenId] + _ENTITLEMENT_COOLDOWN_SECONDS) {
             // Token transferred for the first time or entitlement active for more than a week.
             // Give entitlement to new owner.
             // Add 1 second to disallow flashloans even if token has not been transferred for more than a week
-            entitlementAfterTimestamps[tokenId] = block.timestamp + 1;
-        } else if (block.timestamp >= entitlementAfterTimestamps[tokenId]) {
+            entitlementAfterTimestamps[tokenId] = blockTimestamp + 1;
+        } else if (blockTimestamp >= entitlementAfterTimestamps[tokenId]) {
             // Entitlement active for less than a week.
             // New owner will get entitlement a week after entitlement last started.
             entitlementAfterTimestamps[tokenId] += _ENTITLEMENT_COOLDOWN_SECONDS;
