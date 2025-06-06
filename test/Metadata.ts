@@ -103,6 +103,18 @@ describe("Metadata", function () {
       await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 101000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith( "Series overlaps with existing");
     });
 
+    it("Reverts when adding series with maxTokens = 0", async function () {
+      const { operator, callMetadataAs } = await loadFixture(setSeriesFixture);
+
+      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100000n, 0n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("maxTokens must be greater than 0");
+    });
+
+    it("Reverts when adding series with price = 0", async function () {
+      const { operator, callMetadataAs } = await loadFixture(setSeriesFixture);
+
+      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 0n, 100000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("Price must be greater than 0");
+    });
+
     it("Gets availability correctly", async function () {
       const { user, callMetadataAs, wagmiId, uniqueId } = await loadFixture(setSeriesFixture);
       const available = await callMetadataAs(user).getAvailableSeries();
@@ -184,6 +196,12 @@ describe("Metadata", function () {
       const { user, callMetadataAs, wagmiId } = await loadFixture(setSeriesFixture);
 
       await expect(callMetadataAs(user).setPriceInGwei(wagmiId, 42n)).to.be.reverted;
+    });
+
+    it("Reverts on setting price to 0", async function () {
+      const { operator, user, callMetadataAs, wagmiId } = await loadFixture(setSeriesFixture);
+
+      await expect(callMetadataAs(operator).setPriceInGwei(wagmiId, 0n)).to.be.revertedWith("Price must be greater than 0");
     });
   });
 

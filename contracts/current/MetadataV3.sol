@@ -135,6 +135,9 @@ contract NeuMetadataV3 is
     }
 
     function addSeries(bytes8 name, uint64 priceInGwei, uint32 firstToken, uint32 maxTokens, uint16 fgColorRGB565, uint16 bgColorRGB565, uint16 accentColorRGB565, bool makeAvailable) external onlyRole(OPERATOR_ROLE) returns (uint16) {
+        require(maxTokens > 0, "maxTokens must be greater than 0");
+        require(priceInGwei > 0, "Price must be greater than 0");
+
         uint16 seriesIndex = uint16(_series.length);
         uint256 maxToken = firstToken + maxTokens - 1;
         uint256 seriesLength = _series.length;
@@ -223,6 +226,8 @@ contract NeuMetadataV3 is
 
     function setPriceInGwei(uint16 seriesIndex, uint64 price) external onlyRole(OPERATOR_ROLE) {
         require(seriesIndex < _series.length, "Invalid series index");
+        require(price > 0, "Price must be greater than 0");
+
         _series[seriesIndex].priceInGwei = price;
 
         emit SeriesPriceUpdated(seriesIndex, price);
