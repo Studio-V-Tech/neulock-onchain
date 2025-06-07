@@ -17,7 +17,7 @@ export interface TokenMetadata {
 
 export const day = 86400;
 
-export const pointsTrait = stringToBytes("points", 32);
+export const pointsTrait = kekkak256("points");
 
 export const userDataBytesArray = [
   randomBytesSeed(16, '0'),

@@ -21,10 +21,10 @@ interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable, 
   refund(tokenId: bigint): Promise<ContractTransactionResponse>;
   royaltyInfo(tokenId: bigint, value: bigint): Promise<[ `0x${string}`, bigint ]>;
   getTraitMetadataURI(): Promise<string>;
-  getTraitValue(tokenId: bigint, traitKey: Uint8Array): Promise<`0x${string}`>;
-  getTraitValues(tokenId: bigint, traitKeys: Uint8Array[]): Promise<`0x${string}`[]>;
+  getTraitValue(tokenId: bigint, traitKey: `0x${string}`): Promise<`0x${string}`>;
+  getTraitValues(tokenId: bigint, traitKeys: `0x${string}`[]): Promise<`0x${string}`[]>;
   setTraitMetadataURI(uri: string): Promise<ContractTransactionResponse>;
-  setTrait(tokenId: bigint, traitKey: Uint8Array, value: Uint8Array): Promise<ContractTransactionResponse>;
+  setTrait(tokenId: bigint, traitKey: `0x${string}`, value: `0x${string}`): Promise<ContractTransactionResponse>;
   increaseSponsorPoints(tokenId: bigint): Promise<{ newSponsorPoints: bigint, sponsorPointsIncrease: bigint }>;
   weiPerSponsorPoint(): Promise<bigint>;
   setWeiPerSponsorPoint(newWeiPerSponsorPoint: bigint): Promise<ContractTransactionResponse>;
@@ -33,7 +33,7 @@ interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable, 
   tokenURI(tokenId: bigint): Promise<string>;
   getTokensOfOwner(owner: `0x${string}`): Promise<bigint[]>;
   getTokensWithData(tokenIds: bigint[]): Promise<{ tokenUris: string[], isUserMinted: boolean[] }>;
-  getTokensTraitValues(tokenIds: bigint[], traitKeys: Uint8Array[]): Promise<`0x${string}`[][]>;
+  getTokensTraitValues(tokenIds: bigint[], traitKeys: `0x${string}`[]): Promise<`0x${string}`[][]>;
   burn(tokenId: bigint): Promise<ContractTransactionResponse>;
   setDaoLockContract(newDaoLockContract: `0x${string}`): Promise<ContractTransactionResponse>;
   isGovernanceToken(tokenId: bigint): Promise<boolean>;

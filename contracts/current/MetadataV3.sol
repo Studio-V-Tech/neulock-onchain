@@ -23,6 +23,7 @@ contract NeuMetadataV3 is
     INeuMetadataV3
 {
     uint256 private constant _VERSION = 3;
+    bytes32 private constant _POINTS_TRAIT_KEY = keccak256("points");
 
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
     bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");
@@ -267,10 +268,10 @@ contract NeuMetadataV3 is
         uint256 tokenId,
         TokenMetadata memory metadata
     ) internal {
-        // This function is to be called only on token mint. Won't emit TraitUpdated event.
         _tokenMetadata[tokenId] = metadata;
 
         emit TokenMetadataUpdated(tokenId, metadata);
+        emit TraitUpdated(_POINTS_TRAIT_KEY, tokenId, bytes32(uint256(metadata.sponsorPoints)));
     }
 
     function increaseSponsorPoints(uint256 tokenId, uint256 sponsorPointsIncrease) external onlyRole(NEU_ROLE) returns (uint256) {
@@ -284,7 +285,7 @@ contract NeuMetadataV3 is
             mintedAt: metadata.mintedAt
         });
 
-        emit TraitUpdated(bytes32("points"), tokenId, bytes32(newSponsorPoints));
+        emit TraitUpdated(_POINTS_TRAIT_KEY, tokenId, bytes32(newSponsorPoints));
         return newSponsorPoints;
     }
     function isGovernanceToken(uint256 tokenId) external view returns (bool) {
@@ -318,7 +319,7 @@ contract NeuMetadataV3 is
     function _getTraitValue(uint256 tokenId, bytes32 traitKey) private view returns (bytes32) {
         TokenMetadata memory metadata = _tokenMetadata[tokenId];
 
-        if (traitKey == "points") {
+        if (traitKey == _POINTS_TRAIT_KEY) {
             return bytes32(uint256(metadata.sponsorPoints));
         } else {
             revert("Trait key not found");
