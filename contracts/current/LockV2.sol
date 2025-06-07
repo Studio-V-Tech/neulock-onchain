@@ -79,7 +79,6 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
     }
 
     function withdraw() external {
-        require(neuDaoAddress != address(0), "NEU DAO address not set");
         require(_getCurrentKeysSet().length() >= REQUIRED_KEY_TOKENS, "Not enough key tokens");
 
         uint256 balance = address(this).balance;
