@@ -74,7 +74,7 @@ contract NeuMetadataV3 is
         }
 
         for (uint256 i = 0; i < _availableSeries.length; i++) {
-            _availableSeriesMap.set(_availableSeries[i]);
+            _addAvailableSeries(_availableSeries[i]);
         }
 
         emit InitializedMetadataV3();
@@ -181,7 +181,7 @@ contract NeuMetadataV3 is
         }));
 
         if (makeAvailable) {
-            _availableSeriesMap.set(seriesIndex);
+            _addAvailableSeries(seriesIndex);
         }
 
         emit SeriesAdded(seriesIndex, name, priceInGwei, firstToken, maxTokens, fgColorRGB565, bgColorRGB565, accentColorRGB565, makeAvailable);
@@ -224,31 +224,23 @@ contract NeuMetadataV3 is
             if (_series[seriesIndex].mintedTokens == _series[seriesIndex].maxTokens) {
                 revert("Series has been fully minted");
             }
-        }
 
-        bool isAlreadyAvailable = _isSeriesAvailable(seriesIndex);
-
-        if (available && !isAlreadyAvailable) {
-            _availableSeriesMap.set(seriesIndex);
-
-            emit SeriesAvailabilityUpdated(seriesIndex, available);
-        } else if (!available && isAlreadyAvailable) {
+            _addAvailableSeries(seriesIndex);
+        } else {
             _removeAvailableSeries(seriesIndex);
-
-            emit SeriesAvailabilityUpdated(seriesIndex, available);
         }
     }
 
     function getAvailableSeries() external view returns(uint16[] memory) {
         // This function has an unbounded loop, so it's not expected to be called by other contracts
-        uint256 availableSeriesLength = _series.length;
+        uint16 availableSeriesLength = uint16(_series.length);
 
         uint16[] memory availableSeries = new uint16[](availableSeriesLength);
-        uint256 availableSeriesCount = 0;
+        uint16 availableSeriesCount = 0;
 
-        for (uint256 i = 0; i < availableSeriesLength; i++) {
-            if (_availableSeriesMap.get(i)) {
-                availableSeries[availableSeriesCount] = uint16(i);
+        for (uint16 i = 0; i < availableSeriesLength; i++) {
+            if (_isSeriesAvailable(i)) {
+                availableSeries[availableSeriesCount] = i;
                 availableSeriesCount++;
             }
         }
@@ -323,8 +315,18 @@ contract NeuMetadataV3 is
         return _availableSeriesMap.get(seriesIndex);
     }
 
+    function _addAvailableSeries(uint16 seriesIndex) private {
+        if (!_isSeriesAvailable(seriesIndex)) {
+            _availableSeriesMap.set(seriesIndex);
+            emit SeriesAvailabilityUpdated(seriesIndex, true);
+        }
+    }
+
     function _removeAvailableSeries(uint16 seriesIndex) private {
-        _availableSeriesMap.unset(seriesIndex);
+        if (_isSeriesAvailable(seriesIndex)) {
+            _availableSeriesMap.unset(seriesIndex);
+            emit SeriesAvailabilityUpdated(seriesIndex, false);
+        }
     }
 
     function _getTraitValue(uint256 tokenId, bytes32 traitKey) private view returns (bytes32) {
