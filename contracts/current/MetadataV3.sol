@@ -161,11 +161,12 @@ contract NeuMetadataV3 is
 
         uint16 seriesIndex = uint16(_series.length);
         uint256 maxToken = firstToken + maxTokens - 1;
-        uint256 seriesLength = _series.length;
 
-        for (uint16 i = 0; i < seriesLength; i++) {
-            require(_series[i].name != name, "Series name already exists");
-            require(maxToken < _series[i].firstToken || firstToken >= _series[i].firstToken + _series[i].maxTokens, "Series overlaps with existing");
+        for (uint16 i = 0; i < seriesIndex; i++) {
+            Series memory series = _series[i];
+
+            require(series.name != name, "Series name already exists");
+            require(maxToken < series.firstToken || firstToken >= series.firstToken + series.maxTokens, "Series overlaps with existing");
         }
 
         _series.push(Series({
