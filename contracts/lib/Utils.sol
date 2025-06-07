@@ -5,14 +5,16 @@ library Bytes8Utils {
     function toString(bytes8 data) internal pure returns (string memory) {
         uint8 i = 0;
 
-        while(i < 8 && data[i] != 0) {
-            i++;
+        unchecked {
+            while(i < 8 && data[i] != 0) {
+                i++;
+            }
         }
 
         bytes memory bytesArray = new bytes(i);
 
-        for (i = 0; i < 8 && data[i] != 0; i++) {
-            bytesArray[i] = data[i];
+        for (uint256 j = 0; j < i; j++) {
+            bytesArray[j] = data[j];
         }
 
         return string(bytesArray);
