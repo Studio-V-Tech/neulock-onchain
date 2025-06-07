@@ -8,6 +8,7 @@ import {INeuV2} from "./INeuV2.sol";
 interface INeuV3 is INeuV2 {
     event InitializedNeuV3(address indexed royaltyReceiver);
     event RoyaltyReceiverUpdated(address indexed royaltyReceiver);
+    event EntitlementTimestampSet(uint256 indexed tokenId, uint256 timestamp);
 
     function setRoyaltyReceiver(address royaltyReceiver) external;
     function entitlementAfterTimestamps(uint256 tokenId) external view returns (uint256);

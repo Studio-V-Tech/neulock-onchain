@@ -96,12 +96,7 @@ contract NeuV3 is
         emit InitializedNeuV3(royaltyReceiver);
     }
 
-    function getTraitMetadataURI()
-        external
-        view
-        override
-        returns (string memory uri)
-    {
+    function getTraitMetadataURI() external view override returns (string memory uri) {
         return _neuMetadata.getTraitMetadataURI();
     }
 
@@ -288,10 +283,12 @@ contract NeuV3 is
             // Give entitlement to new owner.
             // Add 1 second to disallow flashloans even if token has not been transferred for more than a week
             entitlementAfterTimestamps[tokenId] = blockTimestamp + 1;
+            emit EntitlementTimestampSet(tokenId, entitlementAfterTimestamps[tokenId]);
         } else if (blockTimestamp >= entitlementAfterTimestamps[tokenId]) {
             // Entitlement active for less than a week.
             // New owner will get entitlement a week after entitlement last started.
             entitlementAfterTimestamps[tokenId] += _ENTITLEMENT_COOLDOWN_SECONDS;
+            emit EntitlementTimestampSet(tokenId, entitlementAfterTimestamps[tokenId]);
         }
         // In cooldown period. Don't change it.
     }
@@ -303,6 +300,7 @@ contract NeuV3 is
 
         if (to == address(0)) {
             delete entitlementAfterTimestamps[tokenId];
+            emit EntitlementTimestampSet(tokenId, 0);
         } else if (from != address(0)) {
             // Leave entitlement date as 0 for mints, to allow mint + transfer (gifting) with immediate entitlement
             _setEntitlementDate(tokenId);
