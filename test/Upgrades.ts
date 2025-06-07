@@ -20,6 +20,9 @@ import {
   upgradeToMetadataV2Fixture,
   upgradeToV3Fixture,
 } from "./lib/upgrade-fixtures";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import MetadataBaseContract from "../scripts/interfaces/metadata.model";
+import { BaseContract } from "ethers";
 
 describe("Upgrades", function () {
   describe("V1 deployments", function () {
@@ -626,6 +629,34 @@ describe("Upgrades", function () {
           args: [],
         },
       })).to.be.revertedWith('Refundable tokens exist');
+    });
+
+    it("Migrates available series to new data structure correctly", async function () {
+      const { metadataV2, operator, upgrader, user4, callMetadataV2As, ogId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await time.increase(7 * day);
+
+      await (await callMetadataV2As(operator).setSeriesAvailability(ogId, false)).wait();
+
+      const availableSeriesV2 = await callMetadataV2As(user4).getAvailableSeries();
+
+      const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
+      const metadataAddress = await metadataV2.getAddress();
+
+      const metadataV3 = await upgrades.upgradeProxy(metadataAddress, MetadataV3, {
+        call: {
+          fn: 'initializeV3',
+          args: [],
+        },
+      });
+
+      const availableSeriesV3 = await metadataV3.getAvailableSeries();
+
+      expect(availableSeriesV3).to.have.lengthOf(availableSeriesV2.length);
+
+      for (let i = 0; i < availableSeriesV2.length; i++) {
+        expect(availableSeriesV3).to.include(availableSeriesV2[i]);
+      }
     });
 
     it("Reverts on calling deprecated sumAllRefundableTokensValue function", async function () {

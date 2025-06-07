@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 import {Series, TokenMetadata, INeuMetadataV3} from "../interfaces/INeuMetadataV3.sol";
 import {NeuLogoV2} from "./LogoV2.sol";
@@ -22,6 +23,8 @@ contract NeuMetadataV3 is
     UUPSUpgradeable,
     INeuMetadataV3
 {
+    using BitMaps for BitMaps.BitMap;
+
     uint256 private constant _VERSION = 3;
     bytes32 private constant _POINTS_TRAIT_KEY = keccak256("points");
 
@@ -34,8 +37,10 @@ contract NeuMetadataV3 is
     string _traitMetadataURI;
     mapping(uint256 => TokenMetadata) private _tokenMetadata;
     Series[] private _series;
-    uint16[] private _availableSeries;
+    uint16[] private _availableSeries; // Deprecated in V3
     NeuLogoV2 private _logo;
+
+    BitMaps.BitMap private _availableSeriesMap;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -66,6 +71,10 @@ contract NeuMetadataV3 is
     function initializeV3() public reinitializer(3) onlyRole(UPGRADER_ROLE) {
         if (_hasRefundableTokens()) {
             revert("Refundable tokens exist");
+        }
+
+        for (uint256 i = 0; i < _availableSeries.length; i++) {
+            _availableSeriesMap.set(_availableSeries[i]);
         }
 
         emit InitializedMetadataV3();
@@ -171,7 +180,7 @@ contract NeuMetadataV3 is
         }));
 
         if (makeAvailable) {
-            _availableSeries.push(seriesIndex);
+            _availableSeriesMap.set(seriesIndex);
         }
 
         emit SeriesAdded(seriesIndex, name, priceInGwei, firstToken, maxTokens, fgColorRGB565, bgColorRGB565, accentColorRGB565, makeAvailable);
@@ -219,7 +228,7 @@ contract NeuMetadataV3 is
         bool isAlreadyAvailable = _isSeriesAvailable(seriesIndex);
 
         if (available && !isAlreadyAvailable) {
-            _availableSeries.push(seriesIndex);
+            _availableSeriesMap.set(seriesIndex);
 
             emit SeriesAvailabilityUpdated(seriesIndex, available);
         } else if (!available && isAlreadyAvailable) {
@@ -230,7 +239,24 @@ contract NeuMetadataV3 is
     }
 
     function getAvailableSeries() external view returns(uint16[] memory) {
-        return _availableSeries;
+        // This function has an unbounded loop, so it's not expected to be called by other contracts
+        uint256 availableSeriesLength = _series.length;
+
+        uint16[] memory availableSeries = new uint16[](availableSeriesLength);
+        uint256 availableSeriesCount = 0;
+
+        for (uint256 i = 0; i < availableSeriesLength; i++) {
+            if (_availableSeriesMap.get(i)) {
+                availableSeries[availableSeriesCount] = uint16(i);
+                availableSeriesCount++;
+            }
+        }
+
+        assembly {
+            mstore(availableSeries, availableSeriesCount)
+        }
+
+        return availableSeries;
     }
 
     function setPriceInGwei(uint16 seriesIndex, uint64 price) external onlyRole(OPERATOR_ROLE) {
@@ -293,25 +319,11 @@ contract NeuMetadataV3 is
     }
 
     function _isSeriesAvailable(uint16 seriesIndex) private view returns (bool) {
-        uint256 availableSeriesLength = _availableSeries.length;
-
-        for (uint256 i = 0; i < availableSeriesLength; i++) {
-            if (_availableSeries[i] == seriesIndex) {
-                return true;
-            }
-        }
-
-        return false;
+        return _availableSeriesMap.get(seriesIndex);
     }
 
     function _removeAvailableSeries(uint16 seriesIndex) private {
-        for (uint256 i = 0; i < _availableSeries.length; i++) {
-            if (_availableSeries[i] == seriesIndex) {
-                _availableSeries[i] = _availableSeries[_availableSeries.length - 1];
-                _availableSeries.pop();
-                return;
-            }
-        }
+        _availableSeriesMap.unset(seriesIndex);
     }
 
     function _getTraitValue(uint256 tokenId, bytes32 traitKey) private view returns (bytes32) {
