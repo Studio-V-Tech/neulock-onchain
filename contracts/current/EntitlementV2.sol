@@ -118,12 +118,11 @@ contract NeuEntitlementV2 is
             }
         }
 
-        address[] memory result = new address[](count);
-        for (uint256 i = 0; i < count; i++) {
-            result[i] = userEntitlements[i];
+        assembly {
+            mstore(userEntitlements, count)
         }
 
-        return result;
+        return userEntitlements;
     }
 
     function _callerHasContractEntitlement(address user, IERC721 entitlementContract) private view returns (bool) {
