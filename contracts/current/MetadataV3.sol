@@ -27,14 +27,14 @@ contract NeuMetadataV3 is
 
     uint256 private constant _VERSION = 3;
     bytes32 private constant _POINTS_TRAIT_KEY = keccak256("points");
+    uint256 private constant _REFUND_WINDOW = 7 days;
 
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
     bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
-    uint256 private constant REFUND_WINDOW = 7 days;
 
-    string _traitMetadataURI;
+    string private _traitMetadataURI;
     mapping(uint256 => TokenMetadata) private _tokenMetadata;
     Series[] private _series;
     uint16[] private _availableSeries; // Deprecated in V3
@@ -435,7 +435,7 @@ contract NeuMetadataV3 is
                 }
                 
                 // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
-                if (block.timestamp - metadata.mintedAt <= REFUND_WINDOW) {
+                if (block.timestamp - metadata.mintedAt <= _REFUND_WINDOW) {
                     return true;
                 }
 
