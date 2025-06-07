@@ -84,6 +84,8 @@ contract NeuV3 is
         address metadataAddress,
         address payable lockV2Address
     ) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
+        __ERC721Royalty_init();
+
         _neuMetadata = INeuMetadataV3(metadataAddress);
         _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
         _neuDaoLock = INeuDaoLockV1(lockV2Address);
