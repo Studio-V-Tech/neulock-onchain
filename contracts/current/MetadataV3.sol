@@ -139,12 +139,9 @@ contract NeuMetadataV3 is
         uint256 length = traitKeys.length;
         traitValues = new bytes32[](length);
 
-        for (uint256 i = 0; i < length; ) {
+        for (uint256 i = 0; i < length; i++) {
             bytes32 traitKey = traitKeys[i];
             traitValues[i] = _getTraitValue(tokenId, traitKey);
-            unchecked {
-                ++i;
-            }
         }
     }
 
