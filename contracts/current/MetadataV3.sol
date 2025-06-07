@@ -211,9 +211,7 @@ contract NeuMetadataV3 is
         require(seriesIndex < _series.length, "Invalid series index");
 
         if (available) {
-            Series memory series = _series[seriesIndex];
-
-            if (series.mintedTokens == series.maxTokens) {
+            if (_series[seriesIndex].mintedTokens == _series[seriesIndex].maxTokens) {
                 revert("Series has been fully minted");
             }
         }
