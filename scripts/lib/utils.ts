@@ -17,7 +17,7 @@ export interface TokenMetadata {
 
 export const day = 86400;
 
-export const pointsTrait = kekkak256("points");
+export const pointsTrait = keccak256("points");
 
 export const userDataBytesArray = [
   randomBytesSeed(16, '0'),
@@ -46,19 +46,24 @@ export function stringToHex(str: string): `0x${string}` {
   return `0x${Buffer.from(bytes).toString('hex')}`;
 }
 
+export function stringToHex32Bytes(str: string): `0x${string}` {
+  const bytes = stringToBytes(str, 32);
+  return `0x${Buffer.from(bytes).toString('hex')}`;
+}
+
 export function seriesValue(series: { priceInGwei: bigint }): bigint {
   return series.priceInGwei.valueOf() * (10n ** 9n);
 }
 
-export function kekkak256(str: string): `0x${string}` {
+export function keccak256(str: string): `0x${string}` {
   return ethers.keccak256(ethers.toUtf8Bytes(str)) as `0x${string}`;
 }
 
 export function getRoles(): { adminRole: `0x${string}`, upgraderRole: `0x${string}`, operatorRole: `0x${string}` } {
   return {
     adminRole: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    upgraderRole: kekkak256("UPGRADER_ROLE"),
-    operatorRole: kekkak256("OPERATOR_ROLE"),
+    upgraderRole: keccak256("UPGRADER_ROLE"),
+    operatorRole: keccak256("OPERATOR_ROLE"),
   };
 }
 

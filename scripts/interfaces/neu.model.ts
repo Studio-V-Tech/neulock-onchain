@@ -6,7 +6,7 @@ import ERC721Enumerable from "./lib/erc721-enumerable.model";
 
 interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable, ERC721Enumerable {
   initializeV2(lockContract: `0x${string}`): Promise<ContractTransactionResponse>;
-  initializeV3(royaltyReceiver: `0x${string}`, metadataAddress: `0x${string}`): Promise<ContractTransactionResponse>;
+  initializeV3(royaltyReceiver: `0x${string}`, metadataAddress: `0x${string}`, lockV2Address: `0x${string}`): Promise<ContractTransactionResponse>;
   ownerOf(token: bigint): Promise<`0x${string}`>;
   totalSupply(): Promise<bigint>;
   balanceOf(account: `0x${string}`): Promise<bigint>;

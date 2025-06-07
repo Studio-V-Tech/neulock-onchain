@@ -186,6 +186,19 @@ export async function upgradeToV3Fixture() {
 
   await time.increase(7 * day); // Wait for 7 days for the refundable tokens to be spent
 
+  const DaoLockV2 = await ethers.getContractFactory("NeuDaoLockV2");
+
+  const lockV2Deployment = await DaoLockV2.deploy(
+    admin.address,
+    operator.address,
+    await neuV2.getAddress(),
+  );
+
+  await lockV2Deployment.waitForDeployment();
+
+  const lockV2 = DaoLockV2.attach(await lockV2Deployment.getAddress());
+  const callLockV2As = (runner: HardhatEthersSigner) => setLockCallerFactory(lockV2, runner);
+
   const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
   const metadataAddress = await metadataV2.getAddress();
 
@@ -204,7 +217,11 @@ export async function upgradeToV3Fixture() {
   const neuV3 = await upgrades.upgradeProxy(neuAddress, NeuV3, {
     call: {
       fn: 'initializeV3',
-      args: [operator.address, (await metadataV2.getAddress()) as `0x${string}`],
+      args: [
+        operator.address,
+        (await metadataV2.getAddress()) as `0x${string}`,
+        (await lockV2.getAddress()) as `0x${string}`,
+      ],
     },
   });
 
@@ -224,5 +241,5 @@ export async function upgradeToV3Fixture() {
 
   const callEntitlementV2As = (runner: HardhatEthersSigner) => setEntitlementCallerFactory(entitlementV2, runner);
 
-  return { neuV3, metadataV3, storageV3, entitlementV2, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV3As, callLockV1As, callStorageV3As, callEntitlementV2As, wagmiId, ogId, uniqueId, sponsorTransferTotal };
+  return { neuV3, metadataV3, storageV3, entitlementV2, lockV2, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV3As, callMetadataV3As, callLockV2As, callStorageV3As, callEntitlementV2As, wagmiId, ogId, uniqueId, sponsorTransferTotal };
 }

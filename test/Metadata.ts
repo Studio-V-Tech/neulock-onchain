@@ -1,10 +1,9 @@
 import {
   loadFixture,
-  time,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 
-import { TokenMetadata, stringToBytes, bytesToString, kekkak256, getRoles, validateTokenMetadataCommonAttributes, validateSvg, day } from "../scripts/lib/utils";
+import { TokenMetadata, stringToBytes, bytesToString, keccak256, pointsTrait, getRoles, validateTokenMetadataCommonAttributes, validateSvg } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
@@ -238,8 +237,6 @@ describe("Metadata", function () {
     it("Gets dynamic trait correctly", async function () {
       const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
 
-      const pointsTrait = kekkak256("points");
-
       const ogTokenTraitBytes = await callMetadataAs(user).getTraitValue(1n, pointsTrait);
       const wagmiTokenTraitBytes = await callMetadataAs(user).getTraitValue(100002n, pointsTrait);
 
@@ -253,15 +250,13 @@ describe("Metadata", function () {
     it("Reverts on getting nonexistant dynamic trait", async function () {
       const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
 
-      const nonexistantTrait = kekkak256("nonexistant");
+      const nonexistantTrait = keccak256("nonexistant");
 
       await expect(callMetadataAs(user).getTraitValue(1n, nonexistantTrait)).to.be.revertedWith("Trait key not found");
     });
 
     it("Gets multiple dynamic traits correctly", async function () {
       const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
-
-      const pointsTrait = kekkak256("points");
 
       const ogTokenTraitBytes = await callMetadataAs(user).getTraitValues(1n, [pointsTrait]);
 

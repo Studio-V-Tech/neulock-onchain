@@ -81,9 +81,14 @@ contract NeuV3 is
         emit InitializedNeuV2(neuDaoLockAddress);
     }
 
-    function initializeV3(address royaltyReceiver, address metadataAddress) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
+    function initializeV3(
+        address payable royaltyReceiver,
+        address metadataAddress,
+        address payable lockV2Address
+    ) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
         _neuMetadata = INeuMetadataV3(metadataAddress);
-        emit MetadataContractUpdated(metadataAddress);
+        _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
+        _neuDaoLock = INeuDaoLockV1(lockV2Address);
 
         try _neuMetadata.sumAllRefundableTokensValue() returns (uint256) {
             revert("Upgrade Metadata to V3 first");
@@ -91,9 +96,10 @@ contract NeuV3 is
             // Do nothing
         }
 
-        _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
-
-        emit InitializedNeuV3(royaltyReceiver);
+        emit MetadataContractUpdated(metadataAddress);
+        emit RoyaltyReceiverUpdated(royaltyReceiver);
+        emit DaoLockContractUpdated(lockV2Address);
+        emit InitializedNeuV3(royaltyReceiver, metadataAddress, lockV2Address);
     }
 
     function getTraitMetadataURI() external view override returns (string memory uri) {

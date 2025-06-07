@@ -6,7 +6,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BaseContract, ContractTransactionResponse } from "ethers";
 
-import { TokenMetadata, day, kekkak256, seriesValue, getRoles, validateTokenMetadataCommonAttributes, parseSponsorPointsResponse, pointsTrait } from "../scripts/lib/utils";
+import { TokenMetadata, day, seriesValue, getRoles, validateTokenMetadataCommonAttributes, parseSponsorPointsResponse, pointsTrait } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture, setUserDataFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
@@ -369,8 +369,6 @@ describe("Neu", function () {
 
     it("Reverts on trying to set dynamic trait", async function () {
       const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
-
-      const pointsTrait = kekkak256("points");
 
       await expect(callNeuAs(operator).setTrait(1n, pointsTrait, `0x${"0".repeat(64)}`)).to.be.revertedWith("Trait cannot be set");
     });

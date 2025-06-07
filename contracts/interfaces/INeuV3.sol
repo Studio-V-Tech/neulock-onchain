@@ -6,10 +6,19 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import {INeuV2} from "./INeuV2.sol";
 
 interface INeuV3 is INeuV2 {
-    event InitializedNeuV3(address indexed royaltyReceiver);
+    event InitializedNeuV3(
+        address payable indexed royaltyReceiver,
+        address indexed metadataAddress,
+        address payable indexed lockV2Contract
+    );
     event RoyaltyReceiverUpdated(address indexed royaltyReceiver);
     event EntitlementTimestampSet(uint256 indexed tokenId, uint256 timestamp);
 
+    function initializeV3(
+        address payable royaltyReceiver,
+        address metadataAddress,
+        address payable lockV2Address
+    ) external;
     function setRoyaltyReceiver(address royaltyReceiver) external;
     function entitlementAfterTimestamps(uint256 tokenId) external view returns (uint256);
 }

@@ -11,6 +11,7 @@ import {
   userDataHexArray,
   validateSvg,
   validateTokenMetadataCommonAttributes,
+  stringToHex32Bytes,
 } from "../scripts/lib/utils";
 import {
   deployContractsV1Fixture,
@@ -439,7 +440,7 @@ describe("Upgrades", function () {
     it("Gets dynamic trait correctly", async function () {
       const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
 
-      const pointsTrait = stringToBytes("points", 32);
+      const pointsTrait = stringToHex32Bytes("points");
 
       const token1TraitBytes = await callMetadataV2As(user).getTraitValue(1n, pointsTrait);
       const token100001TraitBytes = await callMetadataV2As(user).getTraitValue(100001n, pointsTrait);
@@ -460,7 +461,7 @@ describe("Upgrades", function () {
     it("Reverts on getting nonexistant dynamic trait", async function () {
       const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
 
-      const nonexistantTrait = stringToBytes("nonexistant", 32);
+      const nonexistantTrait = stringToHex32Bytes("nonexistant");
 
       await expect(callMetadataV2As(user).getTraitValue(1n, nonexistantTrait)).to.be.revertedWith("Trait key not found");
     });
@@ -468,7 +469,7 @@ describe("Upgrades", function () {
     it("Gets multiple dynamic traits correctly", async function () {
       const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
 
-      const pointsTrait = stringToBytes("points", 32);
+      const pointsTrait = stringToHex32Bytes("points");
 
       const ogTokenTraitBytes = await callMetadataV2As(user).getTraitValues(1n, [pointsTrait]);
 
@@ -570,7 +571,7 @@ describe("Upgrades", function () {
     });
 
     it("Reverts if initializing V3 before upgrading Metadata", async function () {
-      const { neuV2, upgrader, operator, metadataV2 } = await loadFixture(upgradeToMetadataV2Fixture);
+      const { neuV2, upgrader, operator, metadataV2, lockV1 } = await loadFixture(upgradeToMetadataV2Fixture);
 
       const NeuV3 = await ethers.getContractFactory("NeuV3", upgrader);
       const neuAddress = await neuV2.getAddress();
@@ -578,7 +579,11 @@ describe("Upgrades", function () {
       await expect(upgrades.upgradeProxy(neuAddress, NeuV3, {
         call: {
           fn: 'initializeV3',
-          args: [operator.address as `0x${string}`, (await metadataV2.getAddress()) as `0x${string}`],
+          args: [
+            operator.address as `0x${string}`,
+            (await metadataV2.getAddress()) as `0x${string}`,
+            (await lockV1.getAddress()) as `0x${string}`,
+          ],
         },
       })).to.be.revertedWith('Upgrade Metadata to V3 first');
     });
