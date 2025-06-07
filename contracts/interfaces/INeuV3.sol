@@ -15,6 +15,8 @@ interface INeuV3 is INeuV2, IERC7496 {
     event RoyaltyReceiverUpdated(address indexed royaltyReceiver);
     event EntitlementTimestampSet(uint256 indexed tokenId, uint256 timestamp);
 
+    error Deprecated();
+
     function initializeV3(
         address payable royaltyReceiver,
         address metadataAddress,

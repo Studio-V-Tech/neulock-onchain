@@ -35,7 +35,6 @@ contract NeuV3 is
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    bytes32 public constant POINTS_INCREASER_ROLE = keccak256("POINTS_INCREASER_ROLE");
 
     uint256 public weiPerSponsorPoint;
     INeuMetadataV3 private _neuMetadata;
@@ -133,10 +132,8 @@ contract NeuV3 is
         emit DaoLockContractUpdated(newDaoLockContract);
     }
 
-    function setStorageContract(address newStorageContract) external onlyRole(OPERATOR_ROLE) {
-        _grantRole(POINTS_INCREASER_ROLE, newStorageContract);
-
-        emit StorageContractUpdated(newStorageContract);
+    function setStorageContract(address) external pure {
+        revert Deprecated();
     }
 
     function _privateMint(
@@ -178,7 +175,9 @@ contract NeuV3 is
         revert("Refund deprecated on NeuV3");
     }
 
-    function increaseSponsorPoints(uint256 tokenId) external payable onlyRole(POINTS_INCREASER_ROLE) returns (uint256 newSponsorPoints, uint256 sponsorPointsIncrease) {
+    function increaseSponsorPoints(uint256 tokenId) external payable returns (uint256 newSponsorPoints, uint256 sponsorPointsIncrease) {
+        require(ownerOf(tokenId) == tx.origin, "Cannot add points to unowned NEU");
+
         (newSponsorPoints, sponsorPointsIncrease) = _increaseSponsorPoints(tokenId, msg.value);
 
         // slither-disable-next-line low-level-calls (calling like this is the best practice for sending Ether)

@@ -591,6 +591,12 @@ describe("Upgrades", function () {
       })).to.be.revertedWith('Upgrade Metadata to V3 first');
     });
 
+    it("Reverts when calling deprecated setStorageContract function", async function () {
+      const { callNeuV3As, neuV3, storageV3, operator } = await loadFixture(upgradeToV3Fixture);
+
+      await expect(callNeuV3As(operator).setStorageContract(await storageV3.getAddress() as `0x${string}`)).to.be.revertedWithCustomError(neuV3, 'Deprecated');
+    });
+
     it("Gets proper royalty info after upgrade", async function () {
       const v2Params = await loadFixture(upgradeToNeuV2Fixture);
 

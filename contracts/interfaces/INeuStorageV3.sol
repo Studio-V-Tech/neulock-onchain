@@ -5,4 +5,5 @@ import {INeuStorageV2} from "./INeuStorageV2.sol";
 
 interface INeuStorageV3 is INeuStorageV2 {
     event InitializedStorage(uint256 version, address defaultAdmin, address upgrader, address neuContractAddress);
+    event DataSavedV3(address indexed user, bytes data);
 }

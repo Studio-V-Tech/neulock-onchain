@@ -125,8 +125,6 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   if (operatorSigner) {
     const neuRunner = neu.connect(operatorSigner) as NeuBaseContract;
 
-    await (await neuRunner.setStorageContract(storageAddress as `0x${string}`)).wait();
-    console.log('Storage contract set on NEU token');
     await (await neuRunner.setTraitMetadataURI(traitMetadataUri)).wait();
     console.log('Trait metadata URI set on NEU token');
   } else {

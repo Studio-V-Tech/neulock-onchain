@@ -53,13 +53,9 @@ contract NeuStorageV3 is
     }
 
     function saveData(uint256 tokenId, bytes memory data) external payable {
-        // Call with tokenId = 0 if entitlement by token other than the NEU
         require(_entitlementContract.hasEntitlement(msg.sender), "Caller does not have entitlement");
-        require(msg.value == 0 || _neuContract.ownerOf(tokenId) == msg.sender, "Cannot add points to unowned NEU");
 
-        _userdata[msg.sender] = data;
-
-        emit DataSaved(tokenId, data);
+        _saveData(data);
 
         if (msg.value > 0) {
             // slither-disable-next-line unused-return (we make this call only for the side effect)
@@ -67,8 +63,18 @@ contract NeuStorageV3 is
         }
     }
 
+    function saveDataV3(bytes memory data) external payable {
+        _saveData(data);
+    }
+
     function retrieveData(address owner) external view returns (bytes memory) {
         return _userdata[owner];
+    }
+
+    function _saveData(bytes memory data) private {
+        _userdata[msg.sender] = data;
+
+        emit DataSavedV3(msg.sender, data);
     }
 
     function _authorizeUpgrade(address newImplementation)

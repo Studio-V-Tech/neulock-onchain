@@ -412,7 +412,7 @@ contract NeuMetadataV3 is
         return false;
     }
 
-    function _setTraitMetadataURI(string memory uri) internal {
+    function _setTraitMetadataURI(string memory uri) private {
         // Set the new trait metadata URI.
         _traitMetadataURI = uri;
 
