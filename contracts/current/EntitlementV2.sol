@@ -15,7 +15,7 @@ contract NeuEntitlementV2 is
     UUPSUpgradeable,
     INeuEntitlementV2
 {
-    uint256 private constant VERSION = 2;
+    uint256 private constant _VERSION = 2;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
@@ -43,7 +43,7 @@ contract NeuEntitlementV2 is
         entitlementContracts.push(neuContract);
 
         emit EntitlementContractAdded(neuContract);
-        emit InitializedEntitlement(VERSION, defaultAdmin, upgrader, operator, neuContract);
+        emit InitializedEntitlement(_VERSION, defaultAdmin, upgrader, operator, neuContract);
     }
 
     function addEntitlementContract(address entitlementContract) external onlyRole(OPERATOR_ROLE) override {

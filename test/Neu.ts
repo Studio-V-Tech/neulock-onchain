@@ -209,95 +209,6 @@ describe("Neu", function () {
         balanceBefore + 4n * seriesValue(wagmi).valueOf() + 4n * seriesValue(og).valueOf() - gas);
     });
 
-    it("Withdraws nothing during refund window", async function () {
-      const { operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(balanceBefore - gas);
-    });
-
-    it("Withdraws only value of tokens older than refund window", async function () {
-      const { operator, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      await time.increase(3 * day);
-
-      const wagmi = await callMetadataAs(operator).getSeries(wagmiId);
-      const og = await callMetadataAs(operator).getSeries(ogId);
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(
-        balanceBefore + 2n * seriesValue(wagmi).valueOf() + 1n * seriesValue(og).valueOf() - gas);
-    });
-
-    it("Withdraws only non-refunded tokens", async function () {
-      const { operator, user3, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      await (await callNeuAs(user3).refund(3n)).wait();
-      await (await callNeuAs(user3).refund(100003n)).wait();
-
-      await time.increase(7 * day);
-
-      const wagmi = await callMetadataAs(operator).getSeries(wagmiId);
-      const og = await callMetadataAs(operator).getSeries(ogId);
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(
-        balanceBefore + 3n * seriesValue(wagmi).valueOf() + 3n * seriesValue(og).valueOf() - gas);
-    });
-
-    it("Withdraws once per token", async function () {
-      const { operator, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      const wagmi = await callMetadataAs(operator).getSeries(wagmiId);
-      const og = await callMetadataAs(operator).getSeries(ogId);
-
-      await time.increase(3 * day);
-      await (await callNeuAs(operator).withdraw()).wait();
-      await time.increase(day);
-
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(balanceBefore + seriesValue(wagmi).valueOf() + seriesValue(og).valueOf() - gas);
-    });
-
-    it("Withdraws with value of token burned during refund window", async function () {
-      const { operator, user3, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      await (await callNeuAs(user3).burn(3n)).wait();
-
-      const og = await callMetadataAs(operator).getSeries(ogId);
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(
-        balanceBefore + seriesValue(og).valueOf() - gas);
-    });
-
     it("Withdraws nothing if contract has no balance", async function () {
       const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
 
@@ -315,92 +226,6 @@ describe("Neu", function () {
       const { user, callNeuAs: callNeuAs } = await loadFixture(deployContractsFixture);
 
       await expect(callNeuAs(user).withdraw()).to.be.reverted;
-    });
-  });
-
-  describe("Refund", function () {
-    it("Refunds correctly", async function () {
-      const { user, callNeuAs, callMetadataAs, wagmiId } = await loadFixture(purchasedTokensFixture);
-
-      const wagmi = await callMetadataAs(user).getSeries(wagmiId);
-      const balanceBefore = await ethers.provider.getBalance(user.address);
-
-      const refundReceipt = await (await callNeuAs(user).refund(100001n)).wait();
-      const gas = refundReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(user.address);
-
-      expect(balanceAfter).to.equal(balanceBefore + seriesValue(wagmi).valueOf() - gas);
-    });
-
-    it("Refunds original value after series price change", async function () {
-      const { user, operator, callNeuAs, callMetadataAs, wagmiId } = await loadFixture(purchasedTokensFixture);
-
-      const wagmi = await callMetadataAs(user).getSeries(wagmiId);
-      const originalValue = seriesValue(wagmi).valueOf();
-      const balanceBefore = await ethers.provider.getBalance(user.address);
-
-      await (await callMetadataAs(operator).setPriceInGwei(wagmiId, 42n)).wait();
-
-      const refundReceipt = await (await callNeuAs(user).refund(100001n)).wait();
-      const gas = refundReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(user.address);
-
-      expect(balanceAfter).to.equal(balanceBefore + originalValue - gas);
-    });
-
-    it("Burns token after refund", async function () {
-      const { user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      const user2Address = user2.address as `0x${string}`;
-      const supplyBefore = await callNeuAs(user2).totalSupply();
-      const balanceBefore = await callNeuAs(user2).balanceOf(user2Address);
-      const ownerBefore = await callNeuAs(user2).ownerOf(2n);
-
-      await (await callNeuAs(user2).refund(2n)).wait();
-
-      const supplyAfter = await callNeuAs(user2).totalSupply();
-      const balanceAfter = await callNeuAs(user2).balanceOf(user2Address);
-
-      expect(ownerBefore).to.equal(user2Address);
-      expect(supplyAfter).to.equal(supplyBefore.valueOf() - 1n)
-      expect(balanceAfter).to.equal(balanceBefore.valueOf() - 1n)
-      await expect(callNeuAs(user2).ownerOf(2n)).to.be.reverted;
-    });
-
-    it("Refunds token only once", async function () {
-      const { user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user2).refund(2n)).not.to.be.reverted;
-      await expect(callNeuAs(user2).refund(2n)).to.be.reverted;
-    });
-
-    it("Reverts on refunding non-existent token", async function () {
-      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user).refund(42n)).to.be.reverted;
-    });
-
-    it("Reverts on refunding token owned by someone else", async function () {
-      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user).refund(2n)).to.be.revertedWith("Caller is not token owner");
-    });
-
-    it("Reverts on refunding non-refundable token", async function () {
-      const { user5, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user5).refund(5n)).to.be.revertedWith("Token is not refundable");
-      await expect(callNeuAs(user5).refund(100005n)).to.be.revertedWith("Token is not refundable");
-    });
-
-    it("Reverts on refunding after refund window", async function () {
-      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await time.increase(2 * day);
-
-      await expect(callNeuAs(user).refund(100001n)).to.be.revertedWith("Refund window has passed");
     });
   });
 
@@ -725,6 +550,21 @@ describe("Neu", function () {
 
       expect(entitlementAfterTimestamp).to.equal(BigInt(timestamp + 1));
     });
+  });
+
+  describe("DAO Lock", function () {
+    it("Sets DAO Lock contract", async function () {
+      const { neu, operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(operator).setDaoLockContract(operator.address as `0x${string}`)).to.emit(neu, "DaoLockContractUpdated").withArgs(operator.address as `0x${string}`);
+    });
+
+    it("Reverts on setting DAO Lock contract for non-operators", async function () {
+      const { neu, user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(user).setDaoLockContract(user.address as `0x${string}`)).to.be.reverted;
+    });
+    
   });
 
   describe("Increase balance test (not covered otherwise)", function () {

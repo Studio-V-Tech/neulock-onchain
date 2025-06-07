@@ -34,7 +34,7 @@ contract NeuV3 is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant POINTS_INCREASER_ROLE = keccak256("POINTS_INCREASER_ROLE");
 
-    uint256 private constant GWEI = 1e9;
+    uint256 private constant _GWEI = 1e9;
 
     uint256 public weiPerSponsorPoint;
     INeuMetadataV3 private _neuMetadata;
@@ -81,7 +81,16 @@ contract NeuV3 is
         emit InitializedNeuV2(neuDaoLockAddress);
     }
 
-    function initializeV3(address royaltyReceiver) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
+    function initializeV3(address royaltyReceiver, address metadataAddress) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
+        _neuMetadata = INeuMetadataV3(metadataAddress);
+        emit MetadataContractUpdated(metadataAddress);
+
+        try _neuMetadata.sumAllRefundableTokensValue() returns (uint256) {
+            revert("Upgrade Metadata to V3 first");
+        } catch {
+            // Do nothing
+        }
+
         _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
 
         emit InitializedNeuV3(royaltyReceiver);
@@ -113,12 +122,8 @@ contract NeuV3 is
         // slither-disable-end calls-loop
     }
 
-    function setMetadataContract(address newMetadataContract) external onlyRole(OPERATOR_ROLE) {
-        require(address(_neuMetadata) == address(0), "Metadata contract already set");
-
-        _neuMetadata = INeuMetadataV3(newMetadataContract);
-
-        emit MetadataContractUpdated(newMetadataContract);
+    function setMetadataContract(address) external view onlyRole(OPERATOR_ROLE) {
+        revert("Metadata contract already set");
     }
 
     function setDaoLockContract(address payable newDaoLockContract) external onlyRole(OPERATOR_ROLE) {
@@ -143,11 +148,6 @@ contract NeuV3 is
         _safeMint(to, tokenId);
     }
 
-    function _privateBurn(uint256 tokenId) private {
-        _burn(tokenId);
-        _neuMetadata.deleteTokenMetadata(tokenId);
-    }
-
     function safeMint(address to, uint16 seriesIndex) public override onlyRole(OPERATOR_ROLE) {
         _privateMint(to, seriesIndex, 0);
     }
@@ -159,14 +159,13 @@ contract NeuV3 is
         _privateMint(msg.sender, seriesIndex, seriesPrice);
     }
 
-    function burn (uint256 tokenId) public override {
+    function burn(uint256 tokenId) public override {
         super.burn(tokenId);
         _neuMetadata.deleteTokenMetadata(tokenId);
     }
 
     function withdraw() external onlyRole(OPERATOR_ROLE) {
-        uint256 availableBalance = address(this).balance -
-            _neuMetadata.sumAllRefundableTokensValue();
+        uint256 availableBalance = address(this).balance;
 
         if (availableBalance > 0) {
             // slither-disable-next-line arbitrary-send-eth (msg.sender is operator, guaranteed by onlyRole check)
@@ -174,14 +173,8 @@ contract NeuV3 is
         }
     }
 
-    function refund(uint256 tokenId) external {
-        require(ownerOf(tokenId) == msg.sender, "Caller is not token owner");
-
-        uint256 refundAmount = _neuMetadata.getRefundAmount(tokenId);
-
-        _privateBurn(tokenId);
-
-        payable(msg.sender).transfer(refundAmount);
+    function refund(uint256) external pure {
+        revert("Refund deprecated on NeuV3");
     }
 
     function increaseSponsorPoints(uint256 tokenId) external payable onlyRole(POINTS_INCREASER_ROLE) returns (uint256 newSponsorPoints, uint256 sponsorPointsIncrease) {
@@ -205,7 +198,7 @@ contract NeuV3 is
     }
 
     function setWeiPerSponsorPoint(uint256 newWeiPerSponsorPoint) external onlyRole(OPERATOR_ROLE) {
-        require(newWeiPerSponsorPoint >= GWEI, "Must be at least 1 gwei");
+        require(newWeiPerSponsorPoint >= _GWEI, "Must be at least 1 gwei");
         weiPerSponsorPoint = newWeiPerSponsorPoint;
 
         emit WeiPerSponsorPointUpdated(newWeiPerSponsorPoint);

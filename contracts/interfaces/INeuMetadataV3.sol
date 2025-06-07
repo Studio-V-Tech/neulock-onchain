@@ -4,5 +4,5 @@ pragma solidity 0.8.28;
 import {Series, TokenMetadata, INeuMetadataV2} from "./INeuMetadataV2.sol";
 
 interface INeuMetadataV3 is INeuMetadataV2 {
-    event SeriesRefundableTailSet(uint16 seriesIndex, uint256 tailTokenId);
+    event InitializedMetadataV3();
 }

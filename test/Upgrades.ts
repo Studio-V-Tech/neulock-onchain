@@ -1,5 +1,5 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 
 import {
@@ -569,6 +569,20 @@ describe("Upgrades", function () {
       expect(await neuV3.getAddress()).to.be.properAddress;
     });
 
+    it("Reverts if initializing V3 before upgrading Metadata", async function () {
+      const { neuV2, upgrader, operator, metadataV2 } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const NeuV3 = await ethers.getContractFactory("NeuV3", upgrader);
+      const neuAddress = await neuV2.getAddress();
+
+      await expect(upgrades.upgradeProxy(neuAddress, NeuV3, {
+        call: {
+          fn: 'initializeV3',
+          args: [operator.address as `0x${string}`, (await metadataV2.getAddress()) as `0x${string}`],
+        },
+      })).to.be.revertedWith('Upgrade Metadata to V3 first');
+    });
+
     it("Gets proper royalty info after upgrade", async function () {
       const v2Params = await loadFixture(upgradeToNeuV2Fixture);
 
@@ -593,14 +607,38 @@ describe("Upgrades", function () {
       expect(await metadataV3.getAddress()).to.be.properAddress;
     });
 
-    it("Calculates refundable sum correctly after upgrade", async function () {
-      const v2Values = await loadFixture(upgradeToMetadataV2Fixture);
+    it("Reverts if initializing V3 while there are refundable tokens", async function () {
+      const { metadataV2, upgrader, user4, callNeuV2As } = await loadFixture(upgradeToMetadataV2Fixture);
 
-      const v2Sum = await v2Values.callMetadataV2As(v2Values.user).sumAllRefundableTokensValue();
+      await expect(callNeuV2As(user4).burn(100004n)).not.to.be.reverted;
 
+      const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
+      const metadataAddress = await metadataV2.getAddress();
+
+      await expect(upgrades.upgradeProxy(metadataAddress, MetadataV3, {
+        call: {
+          fn: 'initializeV3',
+          args: [],
+        },
+      })).to.be.revertedWith('Refundable tokens exist');
+    });
+
+    it("Reverts on calling deprecated sumAllRefundableTokensValue function", async function () {
       const { callMetadataV3As, user } = await loadFixture(upgradeToV3Fixture);
 
-      expect(await callMetadataV3As(user).sumAllRefundableTokensValue()).to.equal(v2Sum);
+      await expect(callMetadataV3As(user).sumAllRefundableTokensValue()).to.be.revertedWith('Deprecated on MetadataV3');
+    });
+
+    it("Reverts on calling deprecated getRefundAmount function", async function () {
+      const { callNeuV3As, callMetadataV3As, user, wagmiId } = await loadFixture(upgradeToV3Fixture);
+
+      const wagmi = await callMetadataV3As(user).getSeries(wagmiId);
+
+      await expect(callNeuV3As(user).safeMintPublic(wagmiId, { value: seriesValue(wagmi) })).not.to.be.reverted;
+
+      await expect(callMetadataV3As(user).getRefundAmount(100006n)).to.be.revertedWith('Token is not refundable');
+      await expect(callMetadataV3As(user).getRefundAmount(100007n)).to.be.revertedWith('Token is not refundable');
+      await expect(callMetadataV3As(user).getRefundAmount(42n)).to.be.revertedWith('Token is not refundable');
     });
   });
 

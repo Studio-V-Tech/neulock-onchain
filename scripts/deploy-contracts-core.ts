@@ -98,23 +98,23 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   console.log('---');
 
   if (reinitializersSigner) {
+    const metadataRunner = (metadata as BaseContract).connect(reinitializersSigner) as MetadataBaseContract;
+
+    await (await metadataRunner.initializeV3()).wait();
+    console.log('Reinitialized Metadata V3: No refundable tokens remaining');
+
     const neuRunner = neu.connect(reinitializersSigner) as NeuBaseContract;
 
     await (await neuRunner.initializeV2(lockAddress as `0x${string}`)).wait();
     console.log('Reinitialized Neu V2: DAO Lock contract set on NEU token');
 
-    await (await neuRunner.initializeV3(operatorAddress as `0x${string}`)).wait();
-    console.log('Reinitialized Neu V3: Royalty receiver set on NEU token');
+    await (await neuRunner.initializeV3(operatorAddress as `0x${string}`, metadataAddress as `0x${string}`)).wait();
+    console.log('Reinitialized Neu V3: Royalty receiver and Metadata contract set on NEU token');
 
     const storageRunner = storage.connect(reinitializersSigner) as StorageBaseContract;
 
     await (await storageRunner.initializeV2(entitlementAddress as `0x${string}`)).wait();
     console.log('Reinitialized Storage V2: Entitlement contract set on Storage');
-
-    const metadataRunner = (metadata as BaseContract).connect(reinitializersSigner) as MetadataBaseContract;
-
-    await (await metadataRunner.initializeV3()).wait();
-    console.log('Reinitialized Metadata V3: Series tail set on Metadata');
 
     console.log('---');
   } else {
@@ -125,10 +125,6 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   if (operatorSigner) {
     const neuRunner = neu.connect(operatorSigner) as NeuBaseContract;
 
-    await (await neuRunner.setMetadataContract(metadataAddress as `0x${string}`)).wait();
-    console.log('Metadata contract set on NEU token');
-    await (await neuRunner.setDaoLockContract(lockAddress as `0x${string}`)).wait();
-    console.log('DAO Lock contract set on NEU token');
     await (await neuRunner.setStorageContract(storageAddress as `0x${string}`)).wait();
     console.log('Storage contract set on NEU token');
     await (await neuRunner.setTraitMetadataURI(traitMetadataUri)).wait();

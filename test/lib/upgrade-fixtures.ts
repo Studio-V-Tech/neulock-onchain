@@ -184,17 +184,7 @@ export async function upgradeToMetadataV2Fixture() {
 export async function upgradeToV3Fixture() {
   const { neuV2, metadataV2, storageV2, entitlementV1, lockV1, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuV2As, callMetadataV2As, callLockV1As, callStorageV2As, callEntitlementV1As, wagmiId, ogId, uniqueId, sponsorTransferTotal } = await loadFixture(upgradeToMetadataV2Fixture);
 
-  const NeuV3 = await ethers.getContractFactory("NeuV3", upgrader);
-  const neuAddress = await neuV2.getAddress();
-
-  const neuV3 = await upgrades.upgradeProxy(neuAddress, NeuV3, {
-    call: {
-      fn: 'initializeV3',
-      args: [operator.address],
-    },
-  });
-
-  const callNeuV3As = (runner: HardhatEthersSigner) => setNeuCallerFactory(neuV3, runner);
+  await time.increase(7 * day); // Wait for 7 days for the refundable tokens to be spent
 
   const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
   const metadataAddress = await metadataV2.getAddress();
@@ -207,6 +197,18 @@ export async function upgradeToV3Fixture() {
   });
 
   const callMetadataV3As = (runner: HardhatEthersSigner) => setMetadataCallerFactory(metadataV3, runner);
+
+  const NeuV3 = await ethers.getContractFactory("NeuV3", upgrader);
+  const neuAddress = await neuV2.getAddress();
+
+  const neuV3 = await upgrades.upgradeProxy(neuAddress, NeuV3, {
+    call: {
+      fn: 'initializeV3',
+      args: [operator.address, (await metadataV2.getAddress()) as `0x${string}`],
+    },
+  });
+
+  const callNeuV3As = (runner: HardhatEthersSigner) => setNeuCallerFactory(neuV3, runner);
 
   const StorageV3 = await ethers.getContractFactory("NeuStorageV3", upgrader);
   const storageAddress = await storageV2.getAddress();

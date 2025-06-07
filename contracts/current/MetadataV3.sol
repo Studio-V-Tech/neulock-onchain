@@ -22,7 +22,7 @@ contract NeuMetadataV3 is
     UUPSUpgradeable,
     INeuMetadataV3
 {
-    uint256 private constant VERSION = 3;
+    uint256 private constant _VERSION = 3;
 
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
     bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");
@@ -35,8 +35,6 @@ contract NeuMetadataV3 is
     Series[] private _series;
     uint16[] private _availableSeries;
     NeuLogoV2 private _logo;
-
-    mapping(uint256 => uint256) private _seriesRefundableTail; // seriesIndex => lastTokenId for refund purposes
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -61,13 +59,15 @@ contract NeuMetadataV3 is
         _logo = NeuLogoV2(logoContract);
 
         emit LogoUpdated(logoContract);
-        emit InitializedMetadata(VERSION, defaultAdmin, upgrader, operator, neuContract, logoContract);
+        emit InitializedMetadata(_VERSION, defaultAdmin, upgrader, operator, neuContract, logoContract);
     }
 
     function initializeV3() public reinitializer(3) onlyRole(UPGRADER_ROLE) {
-        for (uint16 i = 0; i < _series.length; i++) {
-            _setSeriesRefundableTailOnBurn(i, _series[i].firstToken + _series[i].maxTokens);
+        if (_hasRefundableTokens()) {
+            revert("Refundable tokens exist");
         }
+
+        emit InitializedMetadataV3();
     }
 
     function createTokenMetadata(uint16 seriesIndex, uint256 originalPrice) external onlyRole(NEU_ROLE) returns (
@@ -92,11 +92,6 @@ contract NeuMetadataV3 is
         }
 
         governance = _givesGovernanceAccess(seriesIndex);
-
-        if (originalPrice > 0) {
-            _seriesRefundableTail[seriesIndex] = tokenId;
-            emit SeriesRefundableTailSet(seriesIndex, tokenId);
-        }
     }
 
     function deleteTokenMetadata(uint256 tokenId) external onlyRole(NEU_ROLE) {
@@ -107,34 +102,7 @@ contract NeuMetadataV3 is
         _series[seriesIndex].burntTokens++;
         delete _tokenMetadata[tokenId];
 
-        if (_seriesRefundableTail[seriesIndex] == tokenId) {
-            _setSeriesRefundableTailOnBurn(seriesIndex, tokenId);
-        }
-
         emit TokenMetadataDeleted(tokenId);
-    }
-
-    function _setSeriesRefundableTailOnBurn(uint16 seriesIndex, uint256 burnedTokenId) internal {
-        // If we don't find a new tail, series doesn't have any refundable tokens
-        _seriesRefundableTail[seriesIndex] = 0;
-
-        uint256 firstToken = _series[seriesIndex].firstToken;
-
-        for (uint256 i = burnedTokenId - 1; i >= firstToken; i--) {
-            if (!_metadataExists(i)) { // Token has been burned
-                continue;
-            }
-            if (!_isInRefundWindow(_tokenMetadata[i])) {
-                // All tokens before this one in the series are also expired
-                break;
-            }
-            if (_tokenMetadata[i].originalPriceInGwei > 0) {
-                _seriesRefundableTail[seriesIndex] = i;
-                break;
-            }
-        }
-
-        emit SeriesRefundableTailSet(seriesIndex, _seriesRefundableTail[seriesIndex]);
     }
 
     function setTraitMetadataURI(string calldata uri) external onlyRole(NEU_ROLE) {
@@ -281,38 +249,12 @@ contract NeuMetadataV3 is
         return uint256(_series[seriesIndex].priceInGwei) * 1e9;
     }
 
-    function sumAllRefundableTokensValue() external view returns (uint256) {
-        uint256 totalValue = 0;
-        uint256 seriesLength = _series.length;
-
-        for (uint16 s = 0; s < seriesLength; s++) {
-            for (uint256 i = _seriesRefundableTail[s]; i >= _series[s].firstToken; i--) {
-                TokenMetadata memory metadata = _tokenMetadata[i];
-
-                if (!_metadataExists(i)) {
-                    // Token has been burned
-                    continue;
-                }
-
-                if (!_isInRefundWindow(metadata)) {
-                    // All tokens before this one in the series are also expired
-                    break;
-                }
-
-                totalValue += metadata.originalPriceInGwei;
-            }
-        }
-
-        return totalValue * 1e9;
+    function sumAllRefundableTokensValue() external pure returns (uint256) {
+        revert("Deprecated on MetadataV3");
     }
 
-    function getRefundAmount(uint256 tokenId) external view returns (uint256) {
-        TokenMetadata memory metadata = _tokenMetadata[tokenId];
-
-        require(metadata.originalPriceInGwei > 0, "Token is not refundable");
-        require(_isInRefundWindow(metadata), "Refund window has passed");
-
-        return metadata.originalPriceInGwei * 1e9;
+    function getRefundAmount(uint256) external pure returns (uint256) {
+        revert("Token is not refundable");
     }
 
     function setLogoContract(address logoContract) external onlyRole(OPERATOR_ROLE) {
@@ -467,9 +409,31 @@ contract NeuMetadataV3 is
         emit MetadataURIUpdated(uri);
     }
 
-    function _isInRefundWindow(TokenMetadata memory metadata) private view returns (bool) {
-        // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
-        return block.timestamp - metadata.mintedAt <= REFUND_WINDOW;
+    function _hasRefundableTokens() private view returns (bool) {
+        for (uint256 i = 0; i < _series.length; i++) {
+            Series memory series = _series[i];
+            for (uint256 j = series.firstToken + series.mintedTokens - 1; j >= series.firstToken; j--) {
+                if (!_metadataExists(j)) { // Token burned
+                    continue;
+                }
+
+                TokenMetadata memory metadata = _tokenMetadata[j];
+
+                if (metadata.originalPriceInGwei == 0) { // Token airdropped
+                    continue;
+                }
+                
+                // slither-disable-next-line timestamp (with a granularity of days for refunds, we can tolerate miner manipulation)
+                if (block.timestamp - metadata.mintedAt <= REFUND_WINDOW) {
+                    return true;
+                }
+
+                // No other tokens in series can be in refund window
+                break;
+            }
+        }
+
+        return false;
     }
 
     function _authorizeUpgrade(address newImplementation)

@@ -17,7 +17,7 @@ contract NeuStorageV3 is
     UUPSUpgradeable,
     INeuStorageV3
 {
-    uint256 private constant VERSION = 3;
+    uint256 private constant _VERSION = 3;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
@@ -43,7 +43,7 @@ contract NeuStorageV3 is
 
         _neuContract = INeuTokenV3(neuContractAddress);
 
-        emit InitializedStorage(VERSION, defaultAdmin, upgrader, neuContractAddress);
+        emit InitializedStorage(_VERSION, defaultAdmin, upgrader, neuContractAddress);
     }
 
     function initializeV2(address entitlementContractAddress) public reinitializer(2) onlyRole(UPGRADER_ROLE) {

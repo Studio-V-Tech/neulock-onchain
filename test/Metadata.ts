@@ -79,16 +79,16 @@ describe("Metadata", function () {
 
       await (await callNeuAs(user).burn(100001n)).wait();
       await (await callNeuAs(user2).burn(1n)).wait();
-      await (await callNeuAs(user3).refund(100002n)).wait();
-      await (await callNeuAs(user3).refund(3n)).wait();
+      await expect(callNeuAs(user3).refund(100002n)).to.be.revertedWith('Refund deprecated on NeuV3');
+      await expect(callNeuAs(user3).refund(3n)).to.be.revertedWith('Refund deprecated on NeuV3');
       await (await callNeuAs(user5).burn(5n)).wait();
 
       const wagmi = await callMetadataAs(user).getSeries(wagmiId);
       const og = await callMetadataAs(user).getSeries(ogId);
       const unique = await callMetadataAs(user).getSeries(uniqueId);
 
-      expect(wagmi.burntTokens).to.equal(2);
-      expect(og.burntTokens).to.equal(3);
+      expect(wagmi.burntTokens).to.equal(1);
+      expect(og.burntTokens).to.equal(2);
       expect(unique.burntTokens).to.equal(0);
     });
 
@@ -301,23 +301,6 @@ describe("Metadata", function () {
       await expect(callMetadataAs(operator).setSeriesAvailability(wagmiId, false)).to.be.reverted;
       await expect(callMetadataAs(user).setSeriesAvailability(wagmiId, false)).not.to.be.reverted;
     });
-  });
-
-  describe("Series refunding tail", function () {
-    it("Sets tail to a previous refundable token when burning the current tail", async function () {
-      const { user3, callNeuAs, ogId, metadata } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user3).burn(4n)).to.emit(metadata, "SeriesRefundableTailSet").withArgs(ogId, 3n);
-    });
-
-    it("Sets tail to zero when burning the current tail and no refundable tokens are left", async function () {
-      const { user3, callNeuAs, ogId, metadata } = await loadFixture(purchasedTokensFixture);
-
-      await time.increase(7 * day);
-
-      await expect(callNeuAs(user3).burn(4n)).to.emit(metadata, "SeriesRefundableTailSet").withArgs(ogId, 0n);
-    });
-
   });
 
   describe("Access control", accessControlTestFactory(AccessControlSupportedContracts.Metadata));
