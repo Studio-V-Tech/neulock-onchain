@@ -404,9 +404,10 @@ contract NeuMetadataV3 is
     function _givesGovernanceAccess(uint16 seriesIndex) private view returns (bool) {
         // Tokens whose name do not start with "WAGMI" give governance access
         bytes32 wagmiNamePrefix = "WAGMI";
+        bytes8 seriesName = _series[seriesIndex].name;
 
         for (uint256 i = 0; i < 5; i++) {
-            if (_series[seriesIndex].name[i] != wagmiNamePrefix[i]) {
+            if (seriesName[i] != wagmiNamePrefix[i]) {
                 return true;
             }
         }
