@@ -30,7 +30,6 @@ contract NeuMetadataV3 is
     uint256 private constant _REFUND_WINDOW = 7 days;
 
     bytes32 public constant NEU_ROLE = keccak256("NEU_ROLE");
-    bytes32 public constant STORAGE_ROLE = keccak256("STORAGE_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
