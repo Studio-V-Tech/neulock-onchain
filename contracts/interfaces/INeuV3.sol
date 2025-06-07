@@ -2,10 +2,11 @@
 pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import {IERC7496} from "../interfaces/IERC7496.sol";
 
 import {INeuV2} from "./INeuV2.sol";
 
-interface INeuV3 is INeuV2 {
+interface INeuV3 is INeuV2, IERC7496 {
     event InitializedNeuV3(
         address payable indexed royaltyReceiver,
         address indexed metadataAddress,

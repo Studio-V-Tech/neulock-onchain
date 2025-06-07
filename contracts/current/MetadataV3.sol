@@ -302,7 +302,6 @@ contract NeuMetadataV3 is
             mintedAt: metadata.mintedAt
         });
 
-        emit TraitUpdated(_POINTS_TRAIT_KEY, tokenId, bytes32(newSponsorPoints));
         return newSponsorPoints;
     }
     function isGovernanceToken(uint256 tokenId) external view returns (bool) {

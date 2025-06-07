@@ -368,9 +368,9 @@ describe("Neu", function () {
     });
 
     it("Reverts on trying to set dynamic trait", async function () {
-      const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
+      const { operator, callNeuAs, neu } = await loadFixture(deployContractsFixture);
 
-      await expect(callNeuAs(operator).setTrait(1n, pointsTrait, `0x${"0".repeat(64)}`)).to.be.revertedWith("Trait cannot be set");
+      await expect(callNeuAs(operator).setTrait(1n, pointsTrait, `0x${"0".repeat(64)}`)).to.be.revertedWithCustomError(neu, "TraitValueUnchanged");
     });
 
     it("Updates dynamic trait correctly", async function () {

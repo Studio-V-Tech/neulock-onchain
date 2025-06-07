@@ -11,14 +11,13 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
-import {IERC7496} from "../interfaces/IERC7496.sol";
 import {INeuMetadataV3} from "../interfaces/INeuMetadataV3.sol";
 import {INeuV3} from "../interfaces/INeuV3.sol";
 import {INeuDaoLockV1} from "../interfaces/ILockV1.sol";
+import {IERC7496} from "../interfaces/IERC7496.sol";
 
 contract NeuV3 is
     INeuV3,
-    IERC7496,
     Initializable,
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
@@ -29,19 +28,18 @@ contract NeuV3 is
     ReentrancyGuardUpgradeable
 {
     uint256 private constant _VERSION = 3;
+    bytes32 private constant _POINTS_TRAIT_KEY = keccak256("points");
+    uint256 private constant _GWEI = 1e9;
+    uint96 private constant _ROYALTY_BASE_POINTS = 1000; // 10%
+    uint256 private constant _ENTITLEMENT_COOLDOWN_SECONDS = 1 weeks;
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant POINTS_INCREASER_ROLE = keccak256("POINTS_INCREASER_ROLE");
 
-    uint256 private constant _GWEI = 1e9;
-
     uint256 public weiPerSponsorPoint;
     INeuMetadataV3 private _neuMetadata;
     INeuDaoLockV1 private _neuDaoLock;
-
-    uint96 private constant _ROYALTY_BASE_POINTS = 1000; // 10%
-    uint256 private constant _ENTITLEMENT_COOLDOWN_SECONDS = 1 weeks;
 
     mapping(uint256 => uint256) public entitlementAfterTimestamps;
 
@@ -107,7 +105,7 @@ contract NeuV3 is
     }
 
     function _setTraitMetadataURI(string calldata uri) private {
-        emit IERC7496.TraitMetadataURIUpdated();
+        emit TraitMetadataURIUpdated();
         _neuMetadata.setTraitMetadataURI(uri);
     }
 
@@ -195,7 +193,7 @@ contract NeuV3 is
 
         newSponsorPoints = _neuMetadata.increaseSponsorPoints(tokenId, sponsorPointsIncrease);
 
-        emit IERC7496.TraitUpdated(bytes32("points"), tokenId, bytes32(newSponsorPoints));
+        emit TraitUpdated(_POINTS_TRAIT_KEY, tokenId, bytes32(newSponsorPoints));
     }
 
     function setWeiPerSponsorPoint(uint256 newWeiPerSponsorPoint) external onlyRole(OPERATOR_ROLE) {
@@ -211,7 +209,7 @@ contract NeuV3 is
         bytes32 /*newValue*/
     ) pure public {
         // We won't allow setting any trait individually.
-        revert("Trait cannot be set");
+        revert TraitValueUnchanged();
     }
 
     function getTraitValue(
