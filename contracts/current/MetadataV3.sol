@@ -87,7 +87,8 @@ contract NeuMetadataV3 is
         require(seriesIndex < _series.length, "Invalid series index");
         require(_series[seriesIndex].mintedTokens < _series[seriesIndex].maxTokens, "Series has been fully minted");
 
-        tokenId = _series[seriesIndex].firstToken + _series[seriesIndex].mintedTokens;
+        Series memory series = _series[seriesIndex];
+        tokenId = series.firstToken + series.mintedTokens;
 
         _setTokenMetadata(tokenId, TokenMetadata({
             originalPriceInGwei: uint64(originalPrice / 1e9),
@@ -95,9 +96,9 @@ contract NeuMetadataV3 is
             mintedAt: uint40(block.timestamp)
         }));
 
-        _series[seriesIndex].mintedTokens++;
+        _series[seriesIndex].mintedTokens = ++series.mintedTokens;
 
-        if (_series[seriesIndex].mintedTokens == _series[seriesIndex].maxTokens) {
+        if (series.mintedTokens == series.maxTokens) {
             _removeAvailableSeries(seriesIndex);
         }
 
