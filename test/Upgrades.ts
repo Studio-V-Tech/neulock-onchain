@@ -665,6 +665,12 @@ describe("Upgrades", function () {
       await expect(callMetadataV3As(user).sumAllRefundableTokensValue()).to.be.revertedWith('Deprecated on MetadataV3');
     });
 
+    it("Reverts on calling deprecated createTokenMetadata function", async function () {
+      const { callMetadataV3As, user } = await loadFixture(upgradeToV3Fixture);
+
+      await expect(callMetadataV3As(user).createTokenMetadata(0n, 0n)).to.be.revertedWith('Deprecated on MetadataV3');
+    });
+
     it("Reverts on calling deprecated getRefundAmount function", async function () {
       const { callNeuV3As, callMetadataV3As, user, wagmiId } = await loadFixture(upgradeToV3Fixture);
 

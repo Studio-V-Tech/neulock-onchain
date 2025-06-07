@@ -80,10 +80,11 @@ contract NeuMetadataV3 is
         emit InitializedMetadataV3();
     }
 
-    function createTokenMetadata(uint16 seriesIndex, uint256 originalPrice) external onlyRole(NEU_ROLE) returns (
-        uint256 tokenId,
-        bool governance
-    ) {
+    function createTokenMetadata(uint16, uint256) external pure returns (uint256, bool) {
+        revert("Deprecated on MetadataV3");
+    }
+
+    function createTokenMetadataV3(uint16 seriesIndex, uint256 originalPrice) external onlyRole(NEU_ROLE) returns (uint256 tokenId) {
         require(seriesIndex < _series.length, "Invalid series index");
         require(_series[seriesIndex].mintedTokens < _series[seriesIndex].maxTokens, "Series has been fully minted");
 
@@ -101,8 +102,6 @@ contract NeuMetadataV3 is
         if (series.mintedTokens == series.maxTokens) {
             _removeAvailableSeries(seriesIndex);
         }
-
-        governance = _givesGovernanceAccess(seriesIndex);
     }
 
     function deleteTokenMetadata(uint256 tokenId) external onlyRole(NEU_ROLE) {

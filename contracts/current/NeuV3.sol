@@ -143,8 +143,8 @@ contract NeuV3 is
         address to,
         uint16 seriesIndex,
         uint256 originalPrice
-    ) private returns (uint256 tokenId, bool governance) {
-        (tokenId, governance) = _neuMetadata.createTokenMetadata(seriesIndex, originalPrice);
+    ) private {
+        uint256 tokenId = _neuMetadata.createTokenMetadataV3(seriesIndex, originalPrice);
 
         _safeMint(to, tokenId);
     }
