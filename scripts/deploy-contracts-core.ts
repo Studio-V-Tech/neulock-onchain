@@ -6,6 +6,7 @@ import { getChain, getChainType } from "./lib/utils";
 import NeuBaseContract from "./interfaces/neu.model";
 import StorageBaseContract from "./interfaces/storage.model";
 import MetadataBaseContract from "./interfaces/metadata.model";
+import EntitlementBaseContract from "./interfaces/entitlement-v2.model";
 
 async function deployContracts({ isTest, forceOperations, forceReinitializers } : {
   isTest?: boolean,
@@ -115,6 +116,11 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
 
     await (await storageRunner.initializeV2(entitlementAddress as `0x${string}`)).wait();
     console.log('Reinitialized Storage V2: Entitlement contract set on Storage');
+
+    const entitlementRunner = entitlement.connect(reinitializersSigner) as EntitlementBaseContract;
+
+    await (await entitlementRunner.initializeV2()).wait();
+    console.log('Reinitialized Entitlement V2: NEU contract set on Entitlement');
 
     console.log('---');
   } else {

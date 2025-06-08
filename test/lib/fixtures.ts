@@ -10,7 +10,7 @@ import deployContracts from "../../scripts/deploy-contracts-core";
 import NeuBaseContract from "../../scripts/interfaces/neu.model";
 import MetadataBaseContract from "../../scripts/interfaces/metadata.model";
 import StorageBaseContract from "../../scripts/interfaces/storage.model";
-import EntitlementBaseContract from "../../scripts/interfaces/entitlement.model";
+import EntitlementBaseContract from "../../scripts/interfaces/entitlement-v2.model";
 import DaoLockBaseContract from "../../scripts/interfaces/lock.model";
 import { day, stringToBytes, seriesValue, userDataBytesArray } from "../../scripts/lib/utils";
 
@@ -177,7 +177,7 @@ export async function unlockFixture() {
     name: 'Neulock Test Lock',
   };
 
-  const { lock: unlockLock, lockAddress } = await unlock.createLock(lockArgs);
+  const { lock: unlockLock } = await unlock.createLock(lockArgs);
 
   const wagmi = await callMetadataAs(user).getSeries(wagmiId);
 

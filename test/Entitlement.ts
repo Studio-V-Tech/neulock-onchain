@@ -2,7 +2,7 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-help
 import { expect } from "chai";
 
 import { day, getRoles, userDataBytesArray } from "../scripts/lib/utils";
-import { deployContractsFixture, entitlementFixture, purchasedOneTokenFixture, purchasedTokensFixture, setSeriesFixture, unlockFixture } from "./lib/fixtures";
+import { deployContractsFixture, entitlementFixture, purchasedOneTokenFixture, unlockFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
 describe("Entitlement", function () {
@@ -18,7 +18,7 @@ describe("Entitlement", function () {
     it("Has NEU entitlement contract after deployment", async function () {
       const { operator, callEntitlementAs, neu } = await loadFixture(deployContractsFixture);
 
-      const firstAddress = await callEntitlementAs(operator).entitlementContracts(0n);
+      const firstAddress = await callEntitlementAs(operator).entitlementContractsV2(0n);
 
       expect(firstAddress).to.be.properAddress;
       expect(firstAddress).to.equal(await neu.getAddress());
@@ -30,7 +30,7 @@ describe("Entitlement", function () {
       const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).not.to.be.reverted;
 
-      const secondContract = await callEntitlementAs(operator).entitlementContracts(1n);
+      const secondContract = await callEntitlementAs(operator).entitlementContractsV2(1n);
 
       expect(secondContract).to.equal(lockAddress);
     });
@@ -59,12 +59,12 @@ describe("Entitlement", function () {
 
       await expect(callEntitlementAs(operator).removeEntitlementContract(neuAddress)).to.be.revertedWith("Entitlement contract not found");
 
-      const firstContract = await callEntitlementAs(operator).entitlementContracts(0n);
-      const secondContract = await callEntitlementAs(operator).entitlementContracts(1n);
+      const firstContract = await callEntitlementAs(operator).entitlementContractsV2(0n);
+      const secondContract = await callEntitlementAs(operator).entitlementContractsV2(1n);
 
       expect(firstContract).to.equal(neuAddress);
       expect(secondContract).to.equal(lockAddress);
-      await expect(callEntitlementAs(operator).entitlementContracts(2n)).to.be.reverted;
+      await expect(callEntitlementAs(operator).entitlementContractsV2(2n)).to.be.reverted;
     });
 
     it("Removes additional entitlement contract", async function () {
@@ -75,10 +75,10 @@ describe("Entitlement", function () {
 
       await expect(callEntitlementAs(operator).removeEntitlementContract(lockAddress)).not.to.be.reverted;
 
-      const firstContract = await callEntitlementAs(operator).entitlementContracts(0n);
+      const firstContract = await callEntitlementAs(operator).entitlementContractsV2(0n);
 
       expect(firstContract).to.equal(neuAddress);
-      await expect(callEntitlementAs(operator).entitlementContracts(1n)).to.be.reverted;
+      await expect(callEntitlementAs(operator).entitlementContractsV2(1n)).to.be.reverted;
     });
   });
 

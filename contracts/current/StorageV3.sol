@@ -63,7 +63,9 @@ contract NeuStorageV3 is
         }
     }
 
-    function saveDataV3(bytes memory data) external payable {
+    function saveDataV3(address entitlementContract, bytes memory data) external {
+        require(_entitlementContract.hasEntitlementWithContract(msg.sender, entitlementContract), "Caller does not have entitlement");
+
         _saveData(data);
     }
 

@@ -23,6 +23,7 @@ import {
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import MetadataBaseContract from "../scripts/interfaces/metadata.model";
 import { BaseContract } from "ethers";
+import { NeuEntitlementV1 } from "../typechain-types";
 
 describe("Upgrades", function () {
   describe("V1 deployments", function () {
@@ -730,15 +731,28 @@ describe("Upgrades", function () {
       expect(await entitlementV2.getAddress()).to.be.properAddress;
     });
 
+    it("Reverts when calling deprecated getter entitlementContracts", async function () {
+      const { user, entitlementV2, neuV3 } = await loadFixture(upgradeToV3Fixture);
+
+      const EntitlementV1 = await ethers.getContractFactory("NeuEntitlementV1", user);
+      const entitlementV1 = EntitlementV1.attach(await entitlementV2.getAddress()) as NeuEntitlementV1;
+
+      const userEntitlements = await entitlementV1.userEntitlementContracts(user.address as `0x${string}`);
+
+      // Sanity check: can call V2 contract with entitlementV1 interface
+      expect(userEntitlements).to.have.lengthOf(1);
+      expect(userEntitlements[0]).to.equal(await neuV3.getAddress());
+
+      // Revert when calling deprecated getter
+      await expect(entitlementV1.entitlementContracts(0n)).to.be.reverted;
+    });
+
     it("Storage remains consistent after upgrade", async function () {
-      const { neuV3, callEntitlementV2As, user } = await loadFixture(upgradeToV3Fixture);
+      const { neuV3, unlockLock, callEntitlementV2As, user } = await loadFixture(upgradeToV3Fixture);
 
-      const userAddress = user.address as `0x${string}`;
-
-      const entitlements = await callEntitlementV2As(user).userEntitlementContracts(userAddress);
-
-      expect(entitlements).to.have.lengthOf(1);
-      expect(entitlements[0]).to.equal(await neuV3.getAddress());
+      expect(await callEntitlementV2As(user).entitlementContractsV2(0n)).to.equal(await neuV3.getAddress());
+      expect(await callEntitlementV2As(user).entitlementContractsV2(1n)).to.equal(await unlockLock.getAddress());
+      await expect(callEntitlementV2As(user).entitlementContractsV2(2n)).to.be.revertedWithPanic();
     });
   });
 });
