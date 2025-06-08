@@ -448,6 +448,23 @@ describe("Neu", function () {
 
       expect(uri).to.equal("data:application/json;base64,eyJ0cmFpdHMiOnsicG9pbnRzIjp7ImRpc3BsYXlOYW1lIjoiU3BvbnNvciBQb2ludHMiLCJkYXRhVHlwZSI6eyJ0eXBlIjoiZGVjaW1hbCJ9LCJ2YWxpZGF0ZU9uU2FsZSI6InJlcXVpcmVVaW50R3RlIn19fQ==");
     });
+
+    it("Sets trait metadata URI correctly", async function () {
+      const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
+
+      await expect(callNeuAs(operator).setTraitMetadataURI("https://example.com"))
+        .to.emit(callNeuAs(operator), "TraitMetadataURIUpdated");
+
+      const uri = await callNeuAs(operator).getTraitMetadataURI();
+
+      expect(uri).to.equal("https://example.com");
+    });
+
+    it("Reverts on setting trait metadata URI for non-operators", async function () {
+      const { user, callNeuAs } = await loadFixture(deployContractsFixture);
+
+      await expect(callNeuAs(user).setTraitMetadataURI("https://example.com")).to.be.reverted;
+    });
   });
 
   describe("Royalty", function () {

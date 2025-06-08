@@ -14,6 +14,7 @@ import StorageBaseContract from "../../scripts/interfaces/storage.model";
 import EntitlementV1BaseContract from "../../scripts/interfaces/entitlement-v1.model";
 import EntitlementV2BaseContract from "../../scripts/interfaces/entitlement-v2.model";
 import DaoLockBaseContract from "../../scripts/interfaces/lock.model";
+import traitMetadataUri from "../../scripts/trait-metadata-uri";
 
 function setNeuCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): NeuBaseContract {
   return contract.connect(runner) as NeuBaseContract;
@@ -245,6 +246,7 @@ export async function upgradeToV3Fixture() {
         operator.address,
         (await metadataV2.getAddress()) as `0x${string}`,
         (await lockV2.getAddress()) as `0x${string}`,
+        traitMetadataUri,
       ],
     },
   });

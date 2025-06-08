@@ -20,7 +20,8 @@ interface INeuV3 is INeuV2, IERC7496 {
     function initializeV3(
         address payable royaltyReceiver,
         address metadataAddress,
-        address payable lockV2Address
+        address payable lockV2Address,
+        string calldata traitMetadataUri
     ) external;
     function setRoyaltyReceiver(address royaltyReceiver) external;
     function entitlementAfterTimestamps(uint256 tokenId) external view returns (uint256);

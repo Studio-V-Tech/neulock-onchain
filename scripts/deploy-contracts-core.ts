@@ -109,8 +109,13 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     await (await neuRunner.initializeV2(lockAddress as `0x${string}`)).wait();
     console.log('Reinitialized Neu V2: DAO Lock contract set on NEU token');
 
-    await (await neuRunner.initializeV3(operatorAddress as `0x${string}`, metadataAddress as `0x${string}`, lockAddress as `0x${string}`)).wait();
-    console.log('Reinitialized Neu V3: Royalty receiver and Metadata contract set on NEU token');
+    await (await neuRunner.initializeV3(
+      operatorAddress as `0x${string}`,
+      metadataAddress as `0x${string}`,
+      lockAddress as `0x${string}`,
+      traitMetadataUri
+    )).wait();
+    console.log('Reinitialized Neu V3: Royalty receiver, Metadata contract, Lock address, and Trait Metadata URI set on NEU token');
 
     const storageRunner = storage.connect(reinitializersSigner) as StorageBaseContract;
 
@@ -122,21 +127,8 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     await (await entitlementRunner.initializeV2()).wait();
     console.log('Reinitialized Entitlement V2: NEU contract set on Entitlement');
 
-    console.log('---');
   } else {
-    console.log('IMPORTANT: Run reinitializers for Storage V2; Metadata V3; and Neu V2 and V3 now!');
-    console.log('---');
-  }
-
-  if (operatorSigner) {
-    const neuRunner = neu.connect(operatorSigner) as NeuBaseContract;
-
-    await (await neuRunner.setTraitMetadataURI(traitMetadataUri)).wait();
-    console.log('Trait metadata URI set on NEU token');
-  } else {
-    console.log('IMPORTANT: Update contract addresses in lib/config.ts now!');
-    console.log('Then, generate transactions for the NEU contract by calling deploy-contracts-tx.ts with the appropriate STEP env variable: 1, 2 and 3, like so:');
-    console.log('STEP=1 npx hardhat run scripts/deploy-contracts-tx.ts --network <network>');
+    console.log('IMPORTANT: Run reinitializers for Entitlement V2; Storage V2; Metadata V3; and Neu V2 and V3 now!');
   }
 
   console.log('---');

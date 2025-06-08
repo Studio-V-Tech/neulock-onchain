@@ -24,6 +24,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import MetadataBaseContract from "../scripts/interfaces/metadata.model";
 import { BaseContract } from "ethers";
 import { NeuEntitlementV1 } from "../typechain-types";
+import traitMetadataUri from "../scripts/trait-metadata-uri";
 
 describe("Upgrades", function () {
   describe("V1 deployments", function () {
@@ -587,6 +588,7 @@ describe("Upgrades", function () {
             operator.address as `0x${string}`,
             (await metadataV2.getAddress()) as `0x${string}`,
             (await lockV1.getAddress()) as `0x${string}`,
+            traitMetadataUri,
           ],
         },
       })).to.be.revertedWith('Upgrade Metadata to V3 first');

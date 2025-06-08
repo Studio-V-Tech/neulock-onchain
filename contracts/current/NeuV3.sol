@@ -81,13 +81,15 @@ contract NeuV3 is
     function initializeV3(
         address payable royaltyReceiver,
         address metadataAddress,
-        address payable lockV2Address
+        address payable lockV2Address,
+        string calldata traitMetadataUri
     ) public reinitializer(3) onlyRole(UPGRADER_ROLE) {
         __ERC721Royalty_init();
 
         _neuMetadata = INeuMetadataV3(metadataAddress);
         _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
         _neuDaoLock = INeuDaoLockV1(lockV2Address);
+        _setTraitMetadataURI(traitMetadataUri);
 
         try _neuMetadata.sumAllRefundableTokensValue() returns (uint256) {
             revert("Upgrade Metadata to V3 first");
