@@ -29,8 +29,9 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
 
     address public neuDaoAddress;
     
+    // slither-disable-next-line uninitialized-state-variables (see https://github.com/crytic/slither/issues/456)
     mapping(uint256 => EnumerableSet.UintSet) private _keyTokenIds;
-    uint256 private _KeyTokenIdsIndex;
+    uint256 private _keyTokenIdsIndex;
 
     constructor(
         address defaultAdmin,
@@ -95,10 +96,10 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
     receive() external payable {}
 
     function _getCurrentKeysSet() internal view returns (EnumerableSet.UintSet storage) {
-        return _keyTokenIds[_KeyTokenIdsIndex];
+        return _keyTokenIds[_keyTokenIdsIndex];
     }
 
     function _clearKeysSet() internal {
-        _KeyTokenIdsIndex += 1;
+        _keyTokenIdsIndex += 1;
     }
 }

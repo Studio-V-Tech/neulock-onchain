@@ -36,6 +36,7 @@ contract NeuMetadataV3 is
     string private _traitMetadataURI;
     mapping(uint256 => TokenMetadata) private _tokenMetadata;
     Series[] private _series;
+    // slither-disable-next-line uninitialized-state-variables
     uint16[] private _availableSeries; // Deprecated in V3
     NeuLogoV2 private _logo;
 
@@ -420,8 +421,11 @@ contract NeuMetadataV3 is
     }
 
     function _hasRefundableTokens() private view returns (bool) {
-        for (uint256 i = 0; i < _series.length; i++) {
+        uint256 seriesLength = _series.length;
+
+        for (uint256 i = 0; i < seriesLength; i++) {
             Series memory series = _series[i];
+
             for (uint256 j = series.firstToken + series.mintedTokens - 1; j >= series.firstToken; j--) {
                 if (!_metadataExists(j)) { // Token burned
                     continue;
@@ -429,6 +433,7 @@ contract NeuMetadataV3 is
 
                 TokenMetadata memory metadata = _tokenMetadata[j];
 
+                // slither-disable-next-line dangerous-strict-equalities (makes no sense to use >= 0)
                 if (metadata.originalPriceInGwei == 0) { // Token airdropped
                     continue;
                 }

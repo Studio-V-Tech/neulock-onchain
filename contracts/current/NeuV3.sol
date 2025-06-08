@@ -89,19 +89,21 @@ contract NeuV3 is
         _neuMetadata = INeuMetadataV3(metadataAddress);
         _setDefaultRoyalty(royaltyReceiver, _ROYALTY_BASE_POINTS);
         _neuDaoLock = INeuDaoLockV1(lockV2Address);
-        _setTraitMetadataURI(traitMetadataUri);
-
-        try _neuMetadata.sumAllRefundableTokensValue() returns (uint256) {
-            revert("Upgrade Metadata to V3 first");
-        } catch {
-            // Do nothing
-        }
 
         emit MetadataContractUpdated(metadataAddress);
         emit RoyaltyReceiverUpdated(royaltyReceiver);
         emit DaoLockContractUpdated(lockV2Address);
         emit InitializedNeuV3(royaltyReceiver, metadataAddress, lockV2Address);
-    }
+
+        _setTraitMetadataURI(traitMetadataUri);
+
+        // slither-disable-next-line unused-return (we expect a revert)
+        try _neuMetadata.sumAllRefundableTokensValue() returns (uint256) {
+            revert("Upgrade Metadata to V3 first");
+        } catch {
+            // Do nothing
+        }
+   }
 
     function getTraitMetadataURI() external view override returns (string memory uri) {
         return _neuMetadata.getTraitMetadataURI();
@@ -178,7 +180,7 @@ contract NeuV3 is
     }
 
     function increaseSponsorPoints(uint256 tokenId) external payable returns (uint256 newSponsorPoints, uint256 sponsorPointsIncrease) {
-        require(ownerOf(tokenId) == tx.origin, "Cannot add points to unowned NEU");
+        _requireOwned(tokenId);
 
         (newSponsorPoints, sponsorPointsIncrease) = _increaseSponsorPoints(tokenId, msg.value);
 
@@ -282,7 +284,7 @@ contract NeuV3 is
     }
     
     function _setEntitlementDate(uint256 tokenId) internal {
-        // slither-disable-next-line timestamp (with a granularity of days for the entitlement cooldown, we can tolerate miner manipulation)
+        // slither-disable-next-line block-timestamp (with a granularity of days for the entitlement cooldown, we can tolerate miner manipulation)
         uint256 blockTimestamp = block.timestamp;
 
         if (blockTimestamp >= entitlementAfterTimestamps[tokenId] + _ENTITLEMENT_COOLDOWN_SECONDS) {

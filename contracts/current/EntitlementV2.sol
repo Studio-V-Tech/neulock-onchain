@@ -54,6 +54,7 @@ contract NeuEntitlementV2 is
         _neuContract = INeuTokenV3(entitlementContracts[0]);
 
         for (uint256 i = 1; i < entitlementContracts.length; i++) {
+            // slither-disable-next-line unused-return (we only care about the side effect)
             _entitlementContracts.add(entitlementContracts[i]);
         }
 
@@ -152,6 +153,7 @@ contract NeuEntitlementV2 is
         for (uint256 i = 0; i < userNeuBalance; i++) {
             uint256 tokenId = _neuContract.tokenOfOwnerByIndex(user, i);
 
+            // slither-disable-next-line block-timestamp (with a granularity of days for the entitlement cooldown, we can tolerate miner manipulation)
             if (block.timestamp >= _neuContract.entitlementAfterTimestamps(tokenId)) {
                 return true;
             }
