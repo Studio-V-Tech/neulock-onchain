@@ -10,6 +10,13 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {INeuEntitlementV2} from "../interfaces/IEntitlementV2.sol";
 import {INeuTokenV3} from "../interfaces/INeuV3.sol";
 
+/**
+ * @title NeuEntitlementV2
+ * @author Lucas Neves (lneves.eth) for Studio V
+ * @notice Manages entitlement contracts and checks user entitlements for Neulock.
+ * @dev Upgradeable contract using OpenZeppelin's UUPS pattern. Handles entitlement contracts and integrates with NeuTokenV3.
+ * @custom:security-contact security@studiov.tech
+ */
 contract NeuEntitlementV2 is
     Initializable,
     AccessControlUpgradeable,
@@ -26,11 +33,25 @@ contract NeuEntitlementV2 is
     EnumerableSet.AddressSet private _entitlementContracts;
     INeuTokenV3 private _neuContract;
 
+    /**
+     * @notice Disables initializers to prevent implementation contract from being initialized.
+     * @dev This constructor is only used to disable initializers for the implementation contract.
+     */
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
+    /**
+     * @notice Initializes the contract with admin, upgrader, operator, and Neu contract addresses.
+     * @dev Grants roles and adds the initial Neu contract as an entitlement contract.
+     * @param defaultAdmin The address to be granted DEFAULT_ADMIN_ROLE.
+     * @param upgrader The address to be granted UPGRADER_ROLE.
+     * @param operator The address to be granted OPERATOR_ROLE.
+     * @param neuContract The address of the NeuTokenV3 contract.
+     *
+     * Emits {EntitlementContractAdded} and {InitializedEntitlement} events.
+     */
     function initialize(
         address defaultAdmin,
         address upgrader,
@@ -50,6 +71,12 @@ contract NeuEntitlementV2 is
         emit InitializedEntitlement(_VERSION, defaultAdmin, upgrader, operator, neuContract);
     }
 
+    /**
+     * @notice Upgrades contract state to V2, migrating entitlement contracts to the new storage structure.
+     * @dev Only callable by addresses with UPGRADER_ROLE. Should be called after upgrading to V2.
+     *
+     * Emits {InitializedEntitlementV2} event.
+     */
     function initializeV2() public reinitializer(2) onlyRole(UPGRADER_ROLE) {
         _neuContract = INeuTokenV3(entitlementContracts[0]);
 
@@ -61,6 +88,12 @@ contract NeuEntitlementV2 is
         emit InitializedEntitlementV2();
     }
 
+    /**
+     * @notice Returns the address of an entitlement contract by index.
+     * @dev Index 0 returns the NeuTokenV3 contract, subsequent indices return other entitlement contracts.
+     * @param index The index of the entitlement contract.
+     * @return The address of the entitlement contract at the given index.
+     */
     function entitlementContractsV2(uint256 index) external view returns (address) {
         if (index == 0) {
             return address(_neuContract);
@@ -69,7 +102,20 @@ contract NeuEntitlementV2 is
         return _entitlementContracts.at(index - 1);
     }
 
+    /**
+     * @notice Adds a new entitlement contract.
+     * @dev Only callable by addresses with OPERATOR_ROLE. The contract must implement balanceOf().
+     * @param entitlementContract The address of the entitlement contract to add.
+     *
+     * Emits {EntitlementContractAdded} event.
+     *
+     * Requirements:
+     * - The contract must not be the NEU contract.
+     * - The contract must not already be added.
+     * - The contract must support balanceOf().
+     */
     function addEntitlementContract(address entitlementContract) external onlyRole(OPERATOR_ROLE) override {
+        require(entitlementContract != address(_neuContract), "Cannot add NEU contract");
         require(_entitlementContracts.add(entitlementContract), "Entitlement contract already added");
 
         // We won't check for the IERC721 interface, since any token that supports balanceOf() can be used
@@ -81,12 +127,28 @@ contract NeuEntitlementV2 is
         emit EntitlementContractAdded(entitlementContract);
     }
 
+    /**
+     * @notice Removes an entitlement contract.
+     * @dev Only callable by addresses with OPERATOR_ROLE.
+     * @param entitlementContract The address of the entitlement contract to remove.
+     *
+     * Emits {EntitlementContractRemoved} event.
+     *
+     * Requirements:
+     * - The contract must be present in the entitlement set.
+     */
     function removeEntitlementContract(address entitlementContract) external onlyRole(OPERATOR_ROLE) override {
         require(_entitlementContracts.remove(entitlementContract), "Entitlement contract not found");
 
         emit EntitlementContractRemoved(entitlementContract);
     }
 
+    /**
+     * @notice Checks if a user has entitlement via any registered contract.
+     * @dev Checks both NeuTokenV3 and all added entitlement contracts.
+     * @param user The address of the user to check entitlement for.
+     * @return True if the user has entitlement, false otherwise.
+     */
     function hasEntitlement(address user) external view override returns (bool) {
         if (_callerHasNeuEntitlement(user)) {
             return true;
@@ -103,6 +165,13 @@ contract NeuEntitlementV2 is
         return false;
     }
 
+    /**
+     * @notice Checks if a user has entitlement with a specific contract.
+     * @dev Checks entitlement for either NeuTokenV3 or a specified entitlement contract.
+     * @param user The address of the user to check entitlement for.
+     * @param entitlementContract The address of the entitlement contract to check.
+     * @return True if the user has entitlement with the specified contract, false otherwise.
+     */
     function hasEntitlementWithContract(address user, address entitlementContract) external view override returns (bool) {
         if (entitlementContract == address(_neuContract)) {
             return _callerHasNeuEntitlement(user);
@@ -115,6 +184,12 @@ contract NeuEntitlementV2 is
         return false;
     }
 
+    /**
+     * @notice Returns the list of entitlement contracts where the user has entitlement.
+     * @dev Checks NeuTokenV3 and all added entitlement contracts for user entitlement.
+     * @param user The address of the user to check entitlement for.
+     * @return An array of addresses of entitlement contracts where the user has entitlement.
+     */
     function userEntitlementContracts(address user) external view override returns (address[] memory) {
         uint256 entitlementContractsLength = _entitlementContracts.length();
 
@@ -162,5 +237,10 @@ contract NeuEntitlementV2 is
         return false;
     }
 
+    /**
+     * @notice Authorizes contract upgrades.
+     * @dev Only addresses with UPGRADER_ROLE can upgrade the contract. Required by UUPS pattern.
+     * @param newImplementation The address of the new contract implementation.
+     */
     function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) override {}
 }

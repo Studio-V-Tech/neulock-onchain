@@ -8,17 +8,11 @@ import {INeuDaoLockV1} from "../interfaces/ILockV1.sol";
 import {INeuV3, INeuTokenV3} from "../interfaces/INeuV3.sol";
 
 /**
- * @dev NeuDaoLock locks Ether donated from Neulock's sponsors until the
- * operator (currently managed by Studio V) sets the address of a permanent DAO
- * contract and the holders of at least 7 governance tokens agree to unlock the
- * funds by calling unlock(tokenId), which registers their token as a "key".
- * 
- * The operator can set the DAO address and, after that, the holders of
- * governance tokens can vote for unlocking the funds. If the operator changes
- * the DAO address, the votes are reset.
- * 
- * Given that there are at least 7 key tokens, anyone can call withdraw() to
- * send the locked funds to the DAO address.
+ * @title NeuDaoLockV2
+ * @author Lucas Neves (lneves.eth) for Studio V
+ * @notice Locks Ether donated from Neulock's sponsors until DAO governance unlocks funds.
+ * @dev Upgradeable lock contract for Neulock. Operator sets DAO address; holders of at least 7 governance tokens must agree to unlock funds. Integrates with NeuTokenV3 for governance logic.
+ * @custom:security-contact security@studiov.tech
  */
 contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -33,6 +27,13 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
     mapping(uint256 => EnumerableSet.UintSet) private _keyTokenIds;
     uint256 private _keyTokenIdsIndex;
 
+    /**
+     * @notice Deploys the contract and sets up roles and the NEU contract address.
+     * @dev Grants DEFAULT_ADMIN_ROLE and OPERATOR_ROLE. Stores NeuTokenV3 contract address.
+     * @param defaultAdmin The address to be granted DEFAULT_ADMIN_ROLE.
+     * @param operator The address to be granted OPERATOR_ROLE.
+     * @param neuContractAddress The address of the NeuTokenV3 contract.
+     */
     constructor(
         address defaultAdmin,
         address operator,
@@ -44,10 +45,23 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
         _neuContract = INeuTokenV3(neuContractAddress);
     }
 
+    /**
+     * @notice Returns the tokenId of a key used to unlock the DAO at a given index.
+     * @dev Indexes into the current set of key tokens.
+     * @param index The index in the key token set.
+     * @return The NEU governance tokenId used as a key.
+     */
     function keyTokenIds(uint256 index) external view returns (uint256) {
         return _getCurrentKeysSet().at(index);
     }
 
+    /**
+     * @notice Sets the address of the permanent DAO contract.
+     * @dev Only callable by OPERATOR_ROLE. Resets all current unlock votes (keys) when called.
+     * @param newNeoDaoAddress The address of the new DAO contract.
+     *
+     * Emits {AddressChange} event.
+     */
     function setNeuDaoAddress(address newNeoDaoAddress) external onlyRole(OPERATOR_ROLE) {
         _clearKeysSet();
 
@@ -57,6 +71,19 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
         emit AddressChange(newNeoDaoAddress);
     }
 
+    /**
+     * @notice Registers a NEU governance token as a key to unlock the DAO funds.
+     * @dev Caller must own the NEU token and it must be a governance token. DAO address must be set.
+     * @param neuTokenId The NEU governance tokenId to register as a key.
+     *
+     * Emits {Unlock} event.
+     *
+     * Requirements:
+     * - Caller must own the NEU token.
+     * - Token must be a governance token.
+     * - DAO address must be set.
+     * - Token must not already be used as a key.
+     */
     function unlock(uint256 neuTokenId) external {
         require(_neuContract.ownerOf(neuTokenId) == msg.sender, "Caller does not own NEU");
         require(_neuContract.isGovernanceToken(neuTokenId), "Provided token is not governance");
@@ -69,6 +96,17 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
         emit Unlock(neuTokenId);
     }
 
+    /**
+     * @notice Cancels a previously registered NEU governance token key.
+     * @dev Caller must own the NEU token. Removes the key from the current set.
+     * @param neuTokenId The NEU governance tokenId to remove as a key.
+     *
+     * Emits {UnlockCancel} event.
+     *
+     * Requirements:
+     * - Caller must own the NEU token.
+     * - Token must be currently registered as a key.
+     */
     function cancelUnlock(uint256 neuTokenId) external {
         require(_neuContract.ownerOf(neuTokenId) == msg.sender, "Caller does not own NEU");
 
@@ -79,6 +117,16 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
         emit UnlockCancel(neuTokenId);
     }
 
+    /**
+     * @notice Withdraws all locked Ether to the DAO address if enough key tokens are present.
+     * @dev Anyone can call this if at least 7 governance tokens have unlocked. Sends Ether to DAO address and emits Withdraw event.
+     *
+     * Emits {Withdraw} event.
+     *
+     * Requirements:
+     * - At least 7 key tokens must have unlocked.
+     * - DAO address must be set.
+     */
     function withdraw() external {
         require(_getCurrentKeysSet().length() >= REQUIRED_KEY_TOKENS, "Not enough key tokens");
 
@@ -93,6 +141,10 @@ contract NeuDaoLockV2 is AccessControl, INeuDaoLockV1 {
         // slither-disable-end low-level-calls
     }
 
+    /**
+     * @notice Accepts Ether donations to be locked in the contract.
+     * @dev Ether sent to this contract is locked until unlocked and withdrawn to the DAO.
+     */
     receive() external payable {}
 
     function _getCurrentKeysSet() internal view returns (EnumerableSet.UintSet storage) {

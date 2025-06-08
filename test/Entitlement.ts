@@ -43,6 +43,14 @@ describe("Entitlement", function () {
       await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).to.be.revertedWith("Entitlement contract already added");
     });
 
+    it("Reverts upon adding NEU contract", async function () {
+      const { operator, callEntitlementAs, neu } = await loadFixture(entitlementFixture);
+
+      const neuAddress = await neu.getAddress() as `0x${string}`;
+
+      await expect(callEntitlementAs(operator).addEntitlementContract(neuAddress)).to.be.revertedWith("Cannot add NEU contract");
+    });
+
     it("Reverts upon adding contract that does not support balanceOf()", async function () {
       const { operator, callEntitlementAs, storage } = await loadFixture(entitlementFixture);
 
