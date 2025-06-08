@@ -10,7 +10,7 @@ import deployContracts from "../../scripts/deploy-contracts-core";
 import NeuBaseContract from "../../scripts/interfaces/neu.model";
 import MetadataBaseContract from "../../scripts/interfaces/metadata.model";
 import StorageBaseContract from "../../scripts/interfaces/storage.model";
-import EntitlementBaseContract from "../../scripts/interfaces/entitlement.model";
+import EntitlementBaseContract from "../../scripts/interfaces/entitlement-v2.model";
 import DaoLockBaseContract from "../../scripts/interfaces/lock.model";
 import { day, stringToBytes, seriesValue, userDataBytesArray } from "../../scripts/lib/utils";
 
@@ -25,7 +25,7 @@ export async function deployContractsFixture({ isTest = false } = {}) {
     isTest,
   });
 
-  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV2" : "NeuV2");
+  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV3" : "NeuV3");
   const neu = Neu.attach(await neuDeployment.getAddress());
 
   function setNeuCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): NeuBaseContract {
@@ -40,14 +40,14 @@ export async function deployContractsFixture({ isTest = false } = {}) {
 
   const callMetadataAs = (runner: HardhatEthersSigner) => setMetadataCallerFactory(metadata, runner);
 
-  const Metadata = await ethers.getContractFactory("NeuMetadataV2");
+  const Metadata = await ethers.getContractFactory("NeuMetadataV3");
   const metadata = Metadata.attach(await metadataDeployment.getAddress());
 
   function setStorageCallerFactory(contract: BaseContract, runner: HardhatEthersSigner): StorageBaseContract {
     return contract.connect(runner) as StorageBaseContract;
   }
 
-  const Storage = await ethers.getContractFactory("NeuStorageV2");
+  const Storage = await ethers.getContractFactory("NeuStorageV3");
   const storage = Storage.attach(await storageDeployment.getAddress());
 
   const callStorageAs = (runner: HardhatEthersSigner) => setStorageCallerFactory(storage, runner);
@@ -56,7 +56,7 @@ export async function deployContractsFixture({ isTest = false } = {}) {
     return contract.connect(runner) as EntitlementBaseContract;
   }
 
-  const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
+  const Entitlement = await ethers.getContractFactory("NeuEntitlementV2");
   const entitlement = Entitlement.attach(await entitlementDeployment.getAddress());
 
   const callEntitlementAs = (runner: HardhatEthersSigner) => setEntitlementCallerFactory(entitlement, runner);
@@ -85,6 +85,19 @@ export async function setSeriesFixture() {
   await (await callMetadataAs(operator).addSeries(stringToBytes('UNIQUE'), 1n, 101n, 1n, 58328n, 6279n, 65153n, true)).wait();
 
   return { neu, metadata, storage, entitlement, lock, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs, neuDeployment, wagmiId: 0n, ogId: 1n, uniqueId: 2n };
+}
+
+export async function purchasedOneTokenFixture() {
+  const { neu, metadata, storage, entitlement, lock, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs, neuDeployment, wagmiId, ogId, uniqueId } = await loadFixture(setSeriesFixture);
+
+  await (await callMetadataAs(operator).setSeriesAvailability(ogId, true)).wait();
+
+  const og = await callMetadataAs(user).getSeries(ogId);
+
+  // User - WAGMI #100001 - Day 0
+  await (await callNeuAs(user).safeMintPublic(ogId, { value: seriesValue(og) })).wait();
+
+  return { neu, metadata, storage, entitlement, lock, logo, admin, upgrader, operator, user, user2, user3, user4, user5, callNeuAs, callMetadataAs, callStorageAs, callEntitlementAs, callLockAs, neuDeployment, wagmiId, ogId, uniqueId };
 }
 
 export async function purchasedTokensFixture() {
@@ -164,7 +177,7 @@ export async function unlockFixture() {
     name: 'Neulock Test Lock',
   };
 
-  const { lock: unlockLock, lockAddress } = await unlock.createLock(lockArgs);
+  const { lock: unlockLock } = await unlock.createLock(lockArgs);
 
   const wagmi = await callMetadataAs(user).getSeries(wagmiId);
 

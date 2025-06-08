@@ -12,8 +12,8 @@ interface MetadataBaseContract extends BaseContract, AccessControl, UUPSUpgradea
   getSeries(seriesIndex: bigint): Promise<{ name: `0x${string}`, priceInGwei: bigint, firstToken: bigint, maxTokens: bigint, mintedTokens: bigint, burntTokens: bigint, isAvailable: boolean, logoSvg: string }>;
   getSeriesMintingPrice(seriesIndex: bigint): Promise<bigint>;
   getTraitMetadataURI(): Promise<string>;
-  getTraitValue(tokenId: bigint, traitKey: Uint8Array): Promise<`0x${string}`>;
-  getTraitValues(tokenId: bigint, traitKeys: Uint8Array[]): Promise<`0x${string}`[]>;
+  getTraitValue(tokenId: bigint, traitKey: `0x${string}`): Promise<`0x${string}`>;
+  getTraitValues(tokenId: bigint, traitKeys: `0x${string}`[]): Promise<`0x${string}`[]>;
   increaseSponsorPoints(tokenId: bigint, sponsorPointsIncrease: bigint): Promise<bigint>;
   isSeriesAvailable(seriesIndex: bigint): Promise<boolean>;
   setPriceInGwei(seriesIndex: bigint, price: bigint): Promise<ContractTransactionResponse>;
@@ -22,6 +22,7 @@ interface MetadataBaseContract extends BaseContract, AccessControl, UUPSUpgradea
   sumAllRefundableTokensValue(): Promise<bigint>;
   tokenURI(tokenId: bigint): Promise<string>;
   setLogoContract(logoContract: `0x${string}`): Promise<ContractTransactionResponse>;
+  initializeV3(): Promise<ContractTransactionResponse>;
 }
 
 export default MetadataBaseContract;

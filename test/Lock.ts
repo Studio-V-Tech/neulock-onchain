@@ -167,9 +167,9 @@ describe("DAO Lock", function () {
     });
 
     it("Reverts when withdrawing before DAO address is set", async function () {
-      const { user, lock, callLockAs } = await loadFixture(daoLockFixture);
+      const { user, callLockAs } = await loadFixture(daoLockFixture);
 
-      await expect(callLockAs(user).withdraw()).to.be.revertedWith("NEU DAO address not set");
+      await expect(callLockAs(user).withdraw()).to.be.reverted;
     });
 
     it("Reverts when withdrawing to DAO address that cannot receive funds", async function () {

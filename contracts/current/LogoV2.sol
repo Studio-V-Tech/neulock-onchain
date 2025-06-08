@@ -3,6 +3,13 @@ pragma solidity 0.8.28;
 
 import {INeuLogoV2} from "../interfaces/ILogoV2.sol";
 
+/**
+ * @title NeuLogoV2
+ * @author Lucas Neves (lneves.eth) for Studio V
+ * @notice Generates SVG logos for NEU tokens with customizable colors and series name.
+ * @dev Stateless utility contract for on-chain SVG logo generation, used by Neulock.
+ * @custom:security-contact security@studiov.tech
+ */
 contract NeuLogoV2 is INeuLogoV2 {
     string constant private _BEFORE_FOREGROUND_COLOR = '<svg width="500" height="500" viewBox="0 0 500 500" zoomAndPan="magnify" preserveAspectRatio="xMidYMid" version="1.0" xmlns="http://www.w3.org/2000/svg"><style>.f { fill: #';
     string constant private _BEFORE_BACKGROUND_COLOR = '; } .b { fill: #';
@@ -45,6 +52,16 @@ contract NeuLogoV2 is INeuLogoV2 {
         return string(bStr);
     }
 
+    /**
+     * @notice Generates an SVG logo for a NEU token with the specified parameters.
+     * @dev Returns a complete SVG as a string, with specified colors and series name. Colors are provided in RGB565 format.
+     * @param tokenId The string representation of the token ID to display in the logo.
+     * @param seriesName The series name to display in the logo (converted to lowercase).
+     * @param foregroundColor The foreground color in RGB565 format.
+     * @param backgroundColor The background color in RGB565 format.
+     * @param accentColor The accent color in RGB565 format.
+     * @return svg The generated SVG logo as a string.
+     */
     function makeLogo(string calldata tokenId, string calldata seriesName, uint16 foregroundColor, uint16 backgroundColor, uint16 accentColor) external pure returns (string memory) {
         string memory part1 = string(string.concat(
             _BEFORE_FOREGROUND_COLOR,

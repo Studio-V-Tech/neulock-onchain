@@ -2,8 +2,11 @@ import { BaseContract, ContractTransactionResponse } from "ethers";
 
 import AccessControl from "./lib/access-control.model";
 import UUPSUpgradeable from "./lib/uups-upgradeable.model";
+import ERC721Enumerable from "./lib/erc721-enumerable.model";
 
-interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
+interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable, ERC721Enumerable {
+  initializeV2(lockContract: `0x${string}`): Promise<ContractTransactionResponse>;
+  initializeV3(royaltyReceiver: `0x${string}`, metadataAddress: `0x${string}`, lockV2Address: `0x${string}`, traitMetadataUri: string): Promise<ContractTransactionResponse>;
   ownerOf(token: bigint): Promise<`0x${string}`>;
   totalSupply(): Promise<bigint>;
   balanceOf(account: `0x${string}`): Promise<bigint>;
@@ -18,10 +21,10 @@ interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   refund(tokenId: bigint): Promise<ContractTransactionResponse>;
   royaltyInfo(tokenId: bigint, value: bigint): Promise<[ `0x${string}`, bigint ]>;
   getTraitMetadataURI(): Promise<string>;
-  getTraitValue(tokenId: bigint, traitKey: Uint8Array): Promise<`0x${string}`>;
-  getTraitValues(tokenId: bigint, traitKeys: Uint8Array[]): Promise<`0x${string}`[]>;
+  getTraitValue(tokenId: bigint, traitKey: `0x${string}`): Promise<`0x${string}`>;
+  getTraitValues(tokenId: bigint, traitKeys: `0x${string}`[]): Promise<`0x${string}`[]>;
   setTraitMetadataURI(uri: string): Promise<ContractTransactionResponse>;
-  setTrait(tokenId: bigint, traitKey: Uint8Array, value: Uint8Array): Promise<ContractTransactionResponse>;
+  setTrait(tokenId: bigint, traitKey: `0x${string}`, value: `0x${string}`): Promise<ContractTransactionResponse>;
   increaseSponsorPoints(tokenId: bigint): Promise<{ newSponsorPoints: bigint, sponsorPointsIncrease: bigint }>;
   weiPerSponsorPoint(): Promise<bigint>;
   setWeiPerSponsorPoint(newWeiPerSponsorPoint: bigint): Promise<ContractTransactionResponse>;
@@ -30,10 +33,12 @@ interface NeuBaseContract extends BaseContract, AccessControl, UUPSUpgradeable {
   tokenURI(tokenId: bigint): Promise<string>;
   getTokensOfOwner(owner: `0x${string}`): Promise<bigint[]>;
   getTokensWithData(tokenIds: bigint[]): Promise<{ tokenUris: string[], isUserMinted: boolean[] }>;
-  getTokensTraitValues(tokenIds: bigint[], traitKeys: Uint8Array[]): Promise<`0x${string}`[][]>;
+  getTokensTraitValues(tokenIds: bigint[], traitKeys: `0x${string}`[]): Promise<`0x${string}`[][]>;
   burn(tokenId: bigint): Promise<ContractTransactionResponse>;
   setDaoLockContract(newDaoLockContract: `0x${string}`): Promise<ContractTransactionResponse>;
   isGovernanceToken(tokenId: bigint): Promise<boolean>;
+  setRoyaltyReceiver(royaltyReceiver: `0x${string}`): Promise<ContractTransactionResponse>;
+  entitlementAfterTimestamps(tokenId: bigint): Promise<bigint>;
 }
 
 export default NeuBaseContract;

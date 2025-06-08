@@ -1,5 +1,5 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 
 import {
@@ -11,13 +11,20 @@ import {
   userDataHexArray,
   validateSvg,
   validateTokenMetadataCommonAttributes,
+  stringToHex32Bytes,
 } from "../scripts/lib/utils";
 import {
   deployContractsV1Fixture,
   upgradeToStorageV2Fixture,
   upgradeToNeuV2Fixture,
   upgradeToMetadataV2Fixture,
+  upgradeToV3Fixture,
 } from "./lib/upgrade-fixtures";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import MetadataBaseContract from "../scripts/interfaces/metadata.model";
+import { BaseContract } from "ethers";
+import { NeuEntitlementV1 } from "../typechain-types";
+import traitMetadataUri from "../scripts/trait-metadata-uri";
 
 describe("Upgrades", function () {
   describe("V1 deployments", function () {
@@ -438,7 +445,7 @@ describe("Upgrades", function () {
     it("Gets dynamic trait correctly", async function () {
       const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
 
-      const pointsTrait = stringToBytes("points", 32);
+      const pointsTrait = stringToHex32Bytes("points");
 
       const token1TraitBytes = await callMetadataV2As(user).getTraitValue(1n, pointsTrait);
       const token100001TraitBytes = await callMetadataV2As(user).getTraitValue(100001n, pointsTrait);
@@ -459,7 +466,7 @@ describe("Upgrades", function () {
     it("Reverts on getting nonexistant dynamic trait", async function () {
       const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
 
-      const nonexistantTrait = stringToBytes("nonexistant", 32);
+      const nonexistantTrait = stringToHex32Bytes("nonexistant");
 
       await expect(callMetadataV2As(user).getTraitValue(1n, nonexistantTrait)).to.be.revertedWith("Trait key not found");
     });
@@ -467,7 +474,7 @@ describe("Upgrades", function () {
     it("Gets multiple dynamic traits correctly", async function () {
       const { user, callMetadataV2As } = await loadFixture(upgradeToMetadataV2Fixture);
 
-      const pointsTrait = stringToBytes("points", 32);
+      const pointsTrait = stringToHex32Bytes("points");
 
       const ogTokenTraitBytes = await callMetadataV2As(user).getTraitValues(1n, [pointsTrait]);
 
@@ -558,6 +565,196 @@ describe("Upgrades", function () {
       const { user, callMetadataV2As, wagmiId } = await loadFixture(upgradeToMetadataV2Fixture);
 
       await expect(callMetadataV2As(user).setPriceInGwei(wagmiId, 42n)).to.be.reverted;
+    });
+  });
+
+  describe("Neu V3 upgrade", function () {
+    it("Upgrades Neu to V3", async function () {
+      const { neuV3 } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await neuV3.getAddress()).to.be.properAddress;
+    });
+
+    it("Reverts if initializing V3 before upgrading Metadata", async function () {
+      const { neuV2, upgrader, operator, metadataV2, lockV1 } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      const NeuV3 = await ethers.getContractFactory("NeuV3", upgrader);
+      const neuAddress = await neuV2.getAddress();
+
+      await expect(upgrades.upgradeProxy(neuAddress, NeuV3, {
+        call: {
+          fn: 'initializeV3',
+          args: [
+            operator.address as `0x${string}`,
+            (await metadataV2.getAddress()) as `0x${string}`,
+            (await lockV1.getAddress()) as `0x${string}`,
+            traitMetadataUri,
+          ],
+        },
+      })).to.be.revertedWith('Upgrade Metadata to V3 first');
+    });
+
+    it("Reverts when calling deprecated setStorageContract function", async function () {
+      const { callNeuV3As, neuV3, storageV3, operator } = await loadFixture(upgradeToV3Fixture);
+
+      await expect(callNeuV3As(operator).setStorageContract(await storageV3.getAddress() as `0x${string}`)).to.be.revertedWithCustomError(neuV3, 'Deprecated');
+    });
+
+    it("Gets proper royalty info after upgrade", async function () {
+      const v2Params = await loadFixture(upgradeToNeuV2Fixture);
+
+      const v2Results = await v2Params.callNeuV2As(v2Params.user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(v2Results[0]).to.equal(await v2Params.neuV2.getAddress() as `0x${string}`);
+      expect(v2Results[1]).to.equal(10n ** 8n);
+
+      const { user, operator, callNeuV3As } = await loadFixture(upgradeToV3Fixture);
+
+      const [recipient, value] = await callNeuV3As(user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(recipient).to.equal(operator.address as `0x${string}`);
+      expect(value).to.equal(10n ** 8n);
+    });
+  });
+
+  describe("Metadata V3 upgrade", function () {
+    it("Upgrades Metadata to V3", async function () {
+      const { metadataV3 } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await metadataV3.getAddress()).to.be.properAddress;
+    });
+
+    it("Reverts if initializing V3 while there are refundable tokens", async function () {
+      const { metadataV2, upgrader, user4, callNeuV2As } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await expect(callNeuV2As(user4).burn(100004n)).not.to.be.reverted;
+
+      const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
+      const metadataAddress = await metadataV2.getAddress();
+
+      await expect(upgrades.upgradeProxy(metadataAddress, MetadataV3, {
+        call: {
+          fn: 'initializeV3',
+          args: [],
+        },
+      })).to.be.revertedWith('Refundable tokens exist');
+    });
+
+    it("Migrates available series to new data structure correctly", async function () {
+      const { metadataV2, operator, upgrader, user4, callMetadataV2As, ogId } = await loadFixture(upgradeToMetadataV2Fixture);
+
+      await time.increase(7 * day);
+
+      await (await callMetadataV2As(operator).setSeriesAvailability(ogId, false)).wait();
+
+      const availableSeriesV2 = await callMetadataV2As(user4).getAvailableSeries();
+
+      const MetadataV3 = await ethers.getContractFactory("NeuMetadataV3", upgrader);
+      const metadataAddress = await metadataV2.getAddress();
+
+      const metadataV3 = await upgrades.upgradeProxy(metadataAddress, MetadataV3, {
+        call: {
+          fn: 'initializeV3',
+          args: [],
+        },
+      });
+
+      const availableSeriesV3 = await metadataV3.getAvailableSeries();
+
+      expect(availableSeriesV3).to.have.lengthOf(availableSeriesV2.length);
+
+      for (let i = 0; i < availableSeriesV2.length; i++) {
+        expect(availableSeriesV3).to.include(availableSeriesV2[i]);
+      }
+    });
+
+    it("Reverts on calling deprecated sumAllRefundableTokensValue function", async function () {
+      const { callMetadataV3As, user } = await loadFixture(upgradeToV3Fixture);
+
+      await expect(callMetadataV3As(user).sumAllRefundableTokensValue()).to.be.revertedWith('Deprecated on MetadataV3');
+    });
+
+    it("Reverts on calling deprecated createTokenMetadata function", async function () {
+      const { callMetadataV3As, user } = await loadFixture(upgradeToV3Fixture);
+
+      await expect(callMetadataV3As(user).createTokenMetadata(0n, 0n)).to.be.revertedWith('Deprecated on MetadataV3');
+    });
+
+    it("Reverts on calling deprecated getRefundAmount function", async function () {
+      const { callNeuV3As, callMetadataV3As, user, wagmiId } = await loadFixture(upgradeToV3Fixture);
+
+      const wagmi = await callMetadataV3As(user).getSeries(wagmiId);
+
+      await expect(callNeuV3As(user).safeMintPublic(wagmiId, { value: seriesValue(wagmi) })).not.to.be.reverted;
+
+      await expect(callMetadataV3As(user).getRefundAmount(100006n)).to.be.revertedWith('Token is not refundable');
+      await expect(callMetadataV3As(user).getRefundAmount(100007n)).to.be.revertedWith('Token is not refundable');
+      await expect(callMetadataV3As(user).getRefundAmount(42n)).to.be.revertedWith('Token is not refundable');
+    });
+  });
+
+  describe("Storage V3 upgrade", function () {
+    it("Upgrades Storage to V3", async function () {
+      const { storageV3 } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await storageV3.getAddress()).to.be.properAddress;
+    });
+
+    it("Retrieves data correctly after upgrade", async function () {
+      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await callStorageV3As(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[1]);
+      expect(await callStorageV3As(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
+      expect(await callStorageV3As(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[3]);
+      expect(await callStorageV3As(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
+      expect(await callStorageV3As(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+    });
+
+    it("Updates data correctly after upgrade", async function () {
+      const { callStorageV3As, user, user2, user3, user4, user5 } = await loadFixture(upgradeToV3Fixture);
+
+      await expect(callStorageV3As(user).saveData(100001n, userDataBytesArray[5])).not.to.be.reverted;
+      await expect(callStorageV3As(user3).saveData(0n, userDataBytesArray[1])).not.to.be.reverted;
+      await expect(callStorageV3As(user5).saveData(100001n, userDataBytesArray[3])).not.to.be.reverted;
+
+      expect(await callStorageV3As(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+      expect(await callStorageV3As(user2).retrieveData(user2.address as `0x${string}`)).to.equal(userDataHexArray[2]);
+      expect(await callStorageV3As(user3).retrieveData(user3.address as `0x${string}`)).to.equal(userDataHexArray[1]);
+      expect(await callStorageV3As(user4).retrieveData(user4.address as `0x${string}`)).to.equal(userDataHexArray[4]);
+      expect(await callStorageV3As(user5).retrieveData(user5.address as `0x${string}`)).to.equal(userDataHexArray[3]);
+    });
+
+  });
+
+  describe("Entitlement V2 upgrade", function () {
+    it("Upgrades Entitlement to V2", async function () {
+      const { entitlementV2 } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await entitlementV2.getAddress()).to.be.properAddress;
+    });
+
+    it("Reverts when calling deprecated getter entitlementContracts", async function () {
+      const { user, entitlementV2, neuV3 } = await loadFixture(upgradeToV3Fixture);
+
+      const EntitlementV1 = await ethers.getContractFactory("NeuEntitlementV1", user);
+      const entitlementV1 = EntitlementV1.attach(await entitlementV2.getAddress()) as NeuEntitlementV1;
+
+      const userEntitlements = await entitlementV1.userEntitlementContracts(user.address as `0x${string}`);
+
+      // Sanity check: can call V2 contract with entitlementV1 interface
+      expect(userEntitlements).to.have.lengthOf(1);
+      expect(userEntitlements[0]).to.equal(await neuV3.getAddress());
+
+      // Revert when calling deprecated getter
+      await expect(entitlementV1.entitlementContracts(0n)).to.be.reverted;
+    });
+
+    it("Storage remains consistent after upgrade", async function () {
+      const { neuV3, unlockLock, callEntitlementV2As, user } = await loadFixture(upgradeToV3Fixture);
+
+      expect(await callEntitlementV2As(user).entitlementContractsV2(0n)).to.equal(await neuV3.getAddress());
+      expect(await callEntitlementV2As(user).entitlementContractsV2(1n)).to.equal(await unlockLock.getAddress());
+      await expect(callEntitlementV2As(user).entitlementContractsV2(2n)).to.be.revertedWithPanic();
     });
   });
 });

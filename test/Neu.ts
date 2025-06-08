@@ -6,7 +6,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BaseContract, ContractTransactionResponse } from "ethers";
 
-import { TokenMetadata, day, stringToBytes, seriesValue, getRoles, validateTokenMetadataCommonAttributes, parseSponsorPointsResponse, pointsTrait } from "../scripts/lib/utils";
+import { TokenMetadata, day, seriesValue, getRoles, validateTokenMetadataCommonAttributes, parseSponsorPointsResponse, pointsTrait } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture, setUserDataFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
@@ -209,95 +209,6 @@ describe("Neu", function () {
         balanceBefore + 4n * seriesValue(wagmi).valueOf() + 4n * seriesValue(og).valueOf() - gas);
     });
 
-    it("Withdraws nothing during refund window", async function () {
-      const { operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(balanceBefore - gas);
-    });
-
-    it("Withdraws only value of tokens older than refund window", async function () {
-      const { operator, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      await time.increase(3 * day);
-
-      const wagmi = await callMetadataAs(operator).getSeries(wagmiId);
-      const og = await callMetadataAs(operator).getSeries(ogId);
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(
-        balanceBefore + 2n * seriesValue(wagmi).valueOf() + 1n * seriesValue(og).valueOf() - gas);
-    });
-
-    it("Withdraws only non-refunded tokens", async function () {
-      const { operator, user3, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      await (await callNeuAs(user3).refund(3n)).wait();
-      await (await callNeuAs(user3).refund(100003n)).wait();
-
-      await time.increase(7 * day);
-
-      const wagmi = await callMetadataAs(operator).getSeries(wagmiId);
-      const og = await callMetadataAs(operator).getSeries(ogId);
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(
-        balanceBefore + 3n * seriesValue(wagmi).valueOf() + 3n * seriesValue(og).valueOf() - gas);
-    });
-
-    it("Withdraws once per token", async function () {
-      const { operator, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      const wagmi = await callMetadataAs(operator).getSeries(wagmiId);
-      const og = await callMetadataAs(operator).getSeries(ogId);
-
-      await time.increase(3 * day);
-      await (await callNeuAs(operator).withdraw()).wait();
-      await time.increase(day);
-
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(balanceBefore + seriesValue(wagmi).valueOf() + seriesValue(og).valueOf() - gas);
-    });
-
-    it("Withdraws with value of token burned during refund window", async function () {
-      const { operator, user3, callNeuAs, callMetadataAs, wagmiId, ogId } = await loadFixture(purchasedTokensFixture);
-
-      await (await callNeuAs(user3).burn(3n)).wait();
-
-      const og = await callMetadataAs(operator).getSeries(ogId);
-      const balanceBefore = await ethers.provider.getBalance(operator.address);
-
-      const withdrawalReceipt = await (await callNeuAs(operator).withdraw()).wait();
-      const gas = withdrawalReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(operator.address);
-
-      expect(balanceAfter).to.equal(
-        balanceBefore + seriesValue(og).valueOf() - gas);
-    });
-
     it("Withdraws nothing if contract has no balance", async function () {
       const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
 
@@ -318,93 +229,13 @@ describe("Neu", function () {
     });
   });
 
-  describe("Refund", function () {
-    it("Refunds correctly", async function () {
-      const { user, callNeuAs, callMetadataAs, wagmiId } = await loadFixture(purchasedTokensFixture);
-
-      const wagmi = await callMetadataAs(user).getSeries(wagmiId);
-      const balanceBefore = await ethers.provider.getBalance(user.address);
-
-      const refundReceipt = await (await callNeuAs(user).refund(100001n)).wait();
-      const gas = refundReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(user.address);
-
-      expect(balanceAfter).to.equal(balanceBefore + seriesValue(wagmi).valueOf() - gas);
-    });
-
-    it("Refunds original value after series price change", async function () {
-      const { user, operator, callNeuAs, callMetadataAs, wagmiId } = await loadFixture(purchasedTokensFixture);
-
-      const wagmi = await callMetadataAs(user).getSeries(wagmiId);
-      const originalValue = seriesValue(wagmi).valueOf();
-      const balanceBefore = await ethers.provider.getBalance(user.address);
-
-      await (await callMetadataAs(operator).setPriceInGwei(wagmiId, 42n)).wait();
-
-      const refundReceipt = await (await callNeuAs(user).refund(100001n)).wait();
-      const gas = refundReceipt!.fee;
-
-      const balanceAfter = await ethers.provider.getBalance(user.address);
-
-      expect(balanceAfter).to.equal(balanceBefore + originalValue - gas);
-    });
-
-    it("Burns token after refund", async function () {
-      const { user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      const user2Address = user2.address as `0x${string}`;
-      const supplyBefore = await callNeuAs(user2).totalSupply();
-      const balanceBefore = await callNeuAs(user2).balanceOf(user2Address);
-      const ownerBefore = await callNeuAs(user2).ownerOf(2n);
-
-      await (await callNeuAs(user2).refund(2n)).wait();
-
-      const supplyAfter = await callNeuAs(user2).totalSupply();
-      const balanceAfter = await callNeuAs(user2).balanceOf(user2Address);
-
-      expect(ownerBefore).to.equal(user2Address);
-      expect(supplyAfter).to.equal(supplyBefore.valueOf() - 1n)
-      expect(balanceAfter).to.equal(balanceBefore.valueOf() - 1n)
-      await expect(callNeuAs(user2).ownerOf(2n)).to.be.reverted;
-    });
-
-    it("Refunds token only once", async function () {
-      const { user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user2).refund(2n)).not.to.be.reverted;
-      await expect(callNeuAs(user2).refund(2n)).to.be.reverted;
-    });
-
-    it("Reverts on refunding non-existent token", async function () {
-      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user).refund(42n)).to.be.reverted;
-    });
-
-    it("Reverts on refunding token owned by someone else", async function () {
-      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user).refund(2n)).to.be.revertedWith("Caller is not token owner");
-    });
-
-    it("Reverts on refunding non-refundable token", async function () {
-      const { user5, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await expect(callNeuAs(user5).refund(5n)).to.be.revertedWith("Token is not refundable");
-      await expect(callNeuAs(user5).refund(100005n)).to.be.revertedWith("Token is not refundable");
-    });
-
-    it("Reverts on refunding after refund window", async function () {
-      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
-
-      await time.increase(2 * day);
-
-      await expect(callNeuAs(user).refund(100001n)).to.be.revertedWith("Refund window has passed");
-    });
-  });
-
   describe("Token metadata", function () {
+    it("Reverts on setting metadata contract when already set", async function () {
+      const { operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(operator).setMetadataContract(operator.address as `0x${string}`)).to.be.revertedWith("Metadata contract already set");
+    });
+
     it("Gets token metadata correctly", async function () {
       const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
 
@@ -537,11 +368,9 @@ describe("Neu", function () {
     });
 
     it("Reverts on trying to set dynamic trait", async function () {
-      const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
+      const { operator, callNeuAs, neu } = await loadFixture(deployContractsFixture);
 
-      const pointsTrait = stringToBytes("points", 32);
-
-      await expect(callNeuAs(operator).setTrait(1n, pointsTrait, new Uint8Array(32))).to.be.revertedWith("Trait cannot be set");
+      await expect(callNeuAs(operator).setTrait(1n, pointsTrait, `0x${"0".repeat(64)}`)).to.be.revertedWithCustomError(neu, "TraitValueUnchanged");
     });
 
     it("Updates dynamic trait correctly", async function () {
@@ -619,17 +448,138 @@ describe("Neu", function () {
 
       expect(uri).to.equal("data:application/json;base64,eyJ0cmFpdHMiOnsicG9pbnRzIjp7ImRpc3BsYXlOYW1lIjoiU3BvbnNvciBQb2ludHMiLCJkYXRhVHlwZSI6eyJ0eXBlIjoiZGVjaW1hbCJ9LCJ2YWxpZGF0ZU9uU2FsZSI6InJlcXVpcmVVaW50R3RlIn19fQ==");
     });
+
+    it("Sets trait metadata URI correctly", async function () {
+      const { operator, callNeuAs } = await loadFixture(deployContractsFixture);
+
+      await expect(callNeuAs(operator).setTraitMetadataURI("https://example.com"))
+        .to.emit(callNeuAs(operator), "TraitMetadataURIUpdated");
+
+      const uri = await callNeuAs(operator).getTraitMetadataURI();
+
+      expect(uri).to.equal("https://example.com");
+    });
+
+    it("Reverts on setting trait metadata URI for non-operators", async function () {
+      const { user, callNeuAs } = await loadFixture(deployContractsFixture);
+
+      await expect(callNeuAs(user).setTraitMetadataURI("https://example.com")).to.be.reverted;
+    });
   });
 
   describe("Royalty", function () {
     it("Gets proper royalty info", async function () {
-      const { neu, user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+      const { user, operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
 
       const [recipient, value] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
 
-      expect(recipient).to.equal(await neu.getAddress());
+      expect(recipient).to.equal(operator.address as `0x${string}`);
       expect(value).to.equal(10n ** 8n);
     });
+
+    it("Sets royalty receiver", async function () {
+      const { neu, user, operator, admin, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      const [oldRecipient, oldValue] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(oldRecipient).to.equal(operator.address as `0x${string}`);
+      expect(oldValue).to.equal(10n ** 8n);
+
+      await expect(callNeuAs(operator).setRoyaltyReceiver(admin.address as `0x${string}`)).to.emit(neu, "RoyaltyReceiverUpdated").withArgs(admin.address as `0x${string}`);
+
+      const [newRecipient, newValue] = await callNeuAs(user).royaltyInfo(1n, 10n ** 9n);
+
+      expect(newRecipient).to.equal(admin.address as `0x${string}`);
+      expect(newValue).to.equal(10n ** 8n);
+    });
+
+    it("Reverts on setting royalty receiver for non-operators", async function () {
+      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(user).setRoyaltyReceiver(user.address as `0x${string}`)).to.be.reverted;
+    });
+  });
+
+  describe("Entitlement", function () {
+    it("Keeps entitlement after timestamp at zero upon minting", async function () {
+      const { user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      const entitlementAfterTimestamp = await callNeuAs(user).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(0n);
+    });
+
+    it("Sets entitlement after timestamp correctly after first transfer", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      const timestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(timestamp + 1));
+    });
+
+    it("Sets entitlement after timestamp correctly after transfer less than a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+      const firstTransferTimestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      await time.increase(day);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(firstTransferTimestamp + 7 * day + 1));
+    });
+
+    it("Sets entitlement after timestamp correctly after transfer exactly a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      await time.increase(7 * day);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+      const timestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(timestamp + 1));
+    });
+
+    it("Sets entitlement after timestamp correctly after transfer more than a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      await time.increase(30 * day);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+      const timestamp = (await ethers.provider.getBlock("latest"))?.timestamp ?? 42;
+
+      const entitlementAfterTimestamp = await callNeuAs(user2).entitlementAfterTimestamps(1n);
+
+      expect(entitlementAfterTimestamp).to.equal(BigInt(timestamp + 1));
+    });
+  });
+
+  describe("DAO Lock", function () {
+    it("Sets DAO Lock contract", async function () {
+      const { neu, operator, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(operator).setDaoLockContract(operator.address as `0x${string}`)).to.emit(neu, "DaoLockContractUpdated").withArgs(operator.address as `0x${string}`);
+    });
+
+    it("Reverts on setting DAO Lock contract for non-operators", async function () {
+      const { neu, user, callNeuAs } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callNeuAs(user).setDaoLockContract(user.address as `0x${string}`)).to.be.reverted;
+    });
+    
   });
 
   describe("Increase balance test (not covered otherwise)", function () {

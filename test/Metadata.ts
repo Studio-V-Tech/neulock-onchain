@@ -1,7 +1,9 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import {
+  loadFixture,
+} from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 
-import { TokenMetadata, stringToBytes, bytesToString, getRoles, validateTokenMetadataCommonAttributes, validateSvg } from "../scripts/lib/utils";
+import { TokenMetadata, stringToBytes, bytesToString, keccak256, pointsTrait, getRoles, validateTokenMetadataCommonAttributes, validateSvg } from "../scripts/lib/utils";
 import { deployContractsFixture, setSeriesFixture, purchasedTokensFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
@@ -76,16 +78,16 @@ describe("Metadata", function () {
 
       await (await callNeuAs(user).burn(100001n)).wait();
       await (await callNeuAs(user2).burn(1n)).wait();
-      await (await callNeuAs(user3).refund(100002n)).wait();
-      await (await callNeuAs(user3).refund(3n)).wait();
+      await expect(callNeuAs(user3).refund(100002n)).to.be.revertedWith('Refund deprecated on NeuV3');
+      await expect(callNeuAs(user3).refund(3n)).to.be.revertedWith('Refund deprecated on NeuV3');
       await (await callNeuAs(user5).burn(5n)).wait();
 
       const wagmi = await callMetadataAs(user).getSeries(wagmiId);
       const og = await callMetadataAs(user).getSeries(ogId);
       const unique = await callMetadataAs(user).getSeries(uniqueId);
 
-      expect(wagmi.burntTokens).to.equal(2);
-      expect(og.burntTokens).to.equal(3);
+      expect(wagmi.burntTokens).to.equal(1);
+      expect(og.burntTokens).to.equal(2);
       expect(unique.burntTokens).to.equal(0);
     });
 
@@ -101,6 +103,18 @@ describe("Metadata", function () {
       await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100001n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith( "Series overlaps with existing");
       await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100000n, 2n, 1000n, 1000n, 1000n, true)).to.be.revertedWith( "Series overlaps with existing");
       await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 101000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith( "Series overlaps with existing");
+    });
+
+    it("Reverts when adding series with maxTokens = 0", async function () {
+      const { operator, callMetadataAs } = await loadFixture(setSeriesFixture);
+
+      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 1337n * 10n ** 4n, 100000n, 0n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("maxTokens cannot be 0");
+    });
+
+    it("Reverts when adding series with price = 0", async function () {
+      const { operator, callMetadataAs } = await loadFixture(setSeriesFixture);
+
+      await expect(callMetadataAs(operator).addSeries(stringToBytes('WAGMIOVL'), 0n, 100000n, 1000n, 1000n, 1000n, 1000n, true)).to.be.revertedWith("Price cannot be 0");
     });
 
     it("Gets availability correctly", async function () {
@@ -185,6 +199,12 @@ describe("Metadata", function () {
 
       await expect(callMetadataAs(user).setPriceInGwei(wagmiId, 42n)).to.be.reverted;
     });
+
+    it("Reverts on setting price to 0", async function () {
+      const { operator, callMetadataAs, wagmiId } = await loadFixture(setSeriesFixture);
+
+      await expect(callMetadataAs(operator).setPriceInGwei(wagmiId, 0n)).to.be.revertedWith("Price cannot be 0");
+    });
   });
 
   describe("Token metadata", function () {
@@ -217,8 +237,6 @@ describe("Metadata", function () {
     it("Gets dynamic trait correctly", async function () {
       const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
 
-      const pointsTrait = stringToBytes("points", 32);
-
       const ogTokenTraitBytes = await callMetadataAs(user).getTraitValue(1n, pointsTrait);
       const wagmiTokenTraitBytes = await callMetadataAs(user).getTraitValue(100002n, pointsTrait);
 
@@ -232,15 +250,13 @@ describe("Metadata", function () {
     it("Reverts on getting nonexistant dynamic trait", async function () {
       const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
 
-      const nonexistantTrait = stringToBytes("nonexistant", 32);
+      const nonexistantTrait = keccak256("nonexistant");
 
       await expect(callMetadataAs(user).getTraitValue(1n, nonexistantTrait)).to.be.revertedWith("Trait key not found");
     });
 
     it("Gets multiple dynamic traits correctly", async function () {
       const { user, callMetadataAs } = await loadFixture(purchasedTokensFixture);
-
-      const pointsTrait = stringToBytes("points", 32);
 
       const ogTokenTraitBytes = await callMetadataAs(user).getTraitValues(1n, [pointsTrait]);
 

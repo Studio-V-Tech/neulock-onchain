@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {Series, TokenMetadata, INeuMetadataV2} from "../interfaces/INeuMetadataV2.sol";
-import {NeuLogoV2} from "./LogoV2.sol";
+import {NeuLogoV2} from "../current/LogoV2.sol";
 import {Bytes8Utils} from "../lib/Utils.sol";
 
 using Bytes8Utils for bytes8;

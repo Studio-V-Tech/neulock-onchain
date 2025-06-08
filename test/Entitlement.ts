@@ -2,7 +2,7 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-help
 import { expect } from "chai";
 
 import { day, getRoles, userDataBytesArray } from "../scripts/lib/utils";
-import { deployContractsFixture, entitlementFixture, unlockFixture } from "./lib/fixtures";
+import { deployContractsFixture, entitlementFixture, purchasedOneTokenFixture, unlockFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
 describe("Entitlement", function () {
@@ -18,7 +18,7 @@ describe("Entitlement", function () {
     it("Has NEU entitlement contract after deployment", async function () {
       const { operator, callEntitlementAs, neu } = await loadFixture(deployContractsFixture);
 
-      const firstAddress = await callEntitlementAs(operator).entitlementContracts(0n);
+      const firstAddress = await callEntitlementAs(operator).entitlementContractsV2(0n);
 
       expect(firstAddress).to.be.properAddress;
       expect(firstAddress).to.equal(await neu.getAddress());
@@ -30,7 +30,7 @@ describe("Entitlement", function () {
       const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).not.to.be.reverted;
 
-      const secondContract = await callEntitlementAs(operator).entitlementContracts(1n);
+      const secondContract = await callEntitlementAs(operator).entitlementContractsV2(1n);
 
       expect(secondContract).to.equal(lockAddress);
     });
@@ -43,6 +43,14 @@ describe("Entitlement", function () {
       await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).to.be.revertedWith("Entitlement contract already added");
     });
 
+    it("Reverts upon adding NEU contract", async function () {
+      const { operator, callEntitlementAs, neu } = await loadFixture(entitlementFixture);
+
+      const neuAddress = await neu.getAddress() as `0x${string}`;
+
+      await expect(callEntitlementAs(operator).addEntitlementContract(neuAddress)).to.be.revertedWith("Cannot add NEU contract");
+    });
+
     it("Reverts upon adding contract that does not support balanceOf()", async function () {
       const { operator, callEntitlementAs, storage } = await loadFixture(entitlementFixture);
 
@@ -51,18 +59,20 @@ describe("Entitlement", function () {
       await expect(callEntitlementAs(operator).addEntitlementContract(storageAddress)).to.be.revertedWith("Contract does not support balanceOf()");
     });
 
-    it("Removes NEU entitlement contract", async function () {
+    it("Reverts upon removing NEU entitlement contract", async function () {
       const { operator, callEntitlementAs, neu, unlockLock } = await loadFixture(entitlementFixture);
 
       const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const neuAddress = await neu.getAddress() as `0x${string}`;
 
-      await expect(callEntitlementAs(operator).removeEntitlementContract(neuAddress)).not.to.be.reverted;
+      await expect(callEntitlementAs(operator).removeEntitlementContract(neuAddress)).to.be.revertedWith("Entitlement contract not found");
 
-      const firstContract = await callEntitlementAs(operator).entitlementContracts(0n);
+      const firstContract = await callEntitlementAs(operator).entitlementContractsV2(0n);
+      const secondContract = await callEntitlementAs(operator).entitlementContractsV2(1n);
 
-      expect(firstContract).to.equal(lockAddress);
-      await expect(callEntitlementAs(operator).entitlementContracts(1n)).to.be.reverted;
+      expect(firstContract).to.equal(neuAddress);
+      expect(secondContract).to.equal(lockAddress);
+      await expect(callEntitlementAs(operator).entitlementContractsV2(2n)).to.be.reverted;
     });
 
     it("Removes additional entitlement contract", async function () {
@@ -73,10 +83,10 @@ describe("Entitlement", function () {
 
       await expect(callEntitlementAs(operator).removeEntitlementContract(lockAddress)).not.to.be.reverted;
 
-      const firstContract = await callEntitlementAs(operator).entitlementContracts(0n);
+      const firstContract = await callEntitlementAs(operator).entitlementContractsV2(0n);
 
       expect(firstContract).to.equal(neuAddress);
-      await expect(callEntitlementAs(operator).entitlementContracts(1n)).to.be.reverted;
+      await expect(callEntitlementAs(operator).entitlementContractsV2(1n)).to.be.reverted;
     });
   });
 
@@ -171,6 +181,92 @@ describe("Entitlement", function () {
       const entitlements = await callEntitlementAs(user5).userEntitlementContracts(user4Address);
 
       expect(entitlements).to.have.lengthOf(0);
+    });
+  });
+
+  describe("NEU Entitlement after transfers", function () {
+    it("Has entitlement immediately upon minting", async function () {
+      const { user, callEntitlementAs } = await loadFixture(purchasedOneTokenFixture);
+
+      const hasEntitlementImmediately = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+
+      expect(hasEntitlementImmediately).to.be.true;
+    });
+
+    it("Has entitlement one second after first transfer", async function () {
+      const { user, user2, callNeuAs, callEntitlementAs } = await loadFixture(purchasedOneTokenFixture);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+
+      const hasEntitlementImmediately = await callEntitlementAs(user2).hasEntitlement(user2.address as `0x${string}`);
+
+      expect(hasEntitlementImmediately).to.be.false;
+ 
+      await time.increase(1);
+
+      const hasEntitlementAfterASecond = await callEntitlementAs(user2).hasEntitlement(user2.address as `0x${string}`);
+
+      expect(hasEntitlementAfterASecond).to.be.true;
+    });
+
+    it("Gets entitlement after cooldown when transferred less than a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs, callEntitlementAs } = await loadFixture(purchasedOneTokenFixture);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+
+      await time.increase(day);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      const hasEntitlementImmediately = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+
+      expect(hasEntitlementImmediately).to.be.false;
+
+      await time.increase(6 * day - 1);
+
+      const hasEntitlementAfterAWeek = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+      expect(hasEntitlementAfterAWeek).to.be.false;
+
+      await time.increase(1);
+
+      const hasEntitlementAfterACooldownPeriod = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+      expect(hasEntitlementAfterACooldownPeriod).to.be.true;
+    });
+
+    it("Gets entitlement after one second when transferred exactly a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs, callEntitlementAs } = await loadFixture(purchasedOneTokenFixture);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+
+      await time.increase(7 * day);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      const hasEntitlementImmediately = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+      expect(hasEntitlementImmediately).to.be.false;
+
+      await time.increase(1);
+
+      const hasEntitlementAfterASecond = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+      expect(hasEntitlementAfterASecond).to.be.true;
+    });
+
+    it("Gets entitlement after one second when transferred more than a week after start of entitlement", async function () {
+      const { user, user2, callNeuAs, callEntitlementAs } = await loadFixture(purchasedOneTokenFixture);
+
+      await (await callNeuAs(user).transferFrom(user.address as `0x${string}`, user2.address as `0x${string}`, 1n)).wait();
+
+      await time.increase(30 * day);
+
+      await (await callNeuAs(user2).transferFrom(user2.address as `0x${string}`, user.address as `0x${string}`, 1n)).wait();
+
+      const hasEntitlementImmediately = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+      expect(hasEntitlementImmediately).to.be.false;
+
+      await time.increase(1);
+
+      const hasEntitlementAfterASecond = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
+      expect(hasEntitlementAfterASecond).to.be.true;
     });
   });
 

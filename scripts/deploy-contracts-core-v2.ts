@@ -1,17 +1,13 @@
 import { ethers, upgrades } from "hardhat";
 import { BaseContract } from "ethers";
 import traitMetadataUri from "./trait-metadata-uri";
+import NeuBaseContract from "../scripts/interfaces/neu.model";
 import { Account, ChainType, ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
-import NeuBaseContract from "./interfaces/neu.model";
-import StorageBaseContract from "./interfaces/storage.model";
-import MetadataBaseContract from "./interfaces/metadata.model";
-import EntitlementBaseContract from "./interfaces/entitlement-v2.model";
 
-async function deployContracts({ isTest, forceOperations, forceReinitializers } : {
+async function deployContracts({ isTest, forceOperations } : {
   isTest?: boolean,
   forceOperations?: boolean,
-  forceReinitializers?: boolean,
 } = {}
 ): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
   const chain = await getChain(ethers.provider);
@@ -21,15 +17,14 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   const upgraderAddress = ChainTypeAccount[chainType][Account.upgrader];
   const operatorAddress = ChainTypeAccount[chainType][Account.operator];
 
-  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV3" : "NeuV3");
-  const Metadata = await ethers.getContractFactory("NeuMetadataV3");
-  const Storage = await ethers.getContractFactory("NeuStorageV3");
+  const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV2" : "NeuV2");
+  const Metadata = await ethers.getContractFactory("NeuMetadataV2");
+  const Storage = await ethers.getContractFactory("NeuStorageV2");
   const Logo = await ethers.getContractFactory("NeuLogoV2");
-  const Entitlement = await ethers.getContractFactory("NeuEntitlementV2");
-  const Lock = await ethers.getContractFactory("NeuDaoLockV2");
+  const Entitlement = await ethers.getContractFactory("NeuEntitlementV1");
+  const Lock = await ethers.getContractFactory("NeuDaoLockV1");
 
   const operatorSigner = forceOperations || chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
-  const reinitializersSigner = forceReinitializers || chainType === ChainType.local ? await ethers.getSigner(upgraderAddress) : null;
 
   console.log('---');
 
@@ -76,6 +71,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     adminAddress,
     upgraderAddress,
     neuAddress,
+    entitlementAddress,
   ]);
 
   await storage.waitForDeployment();
@@ -98,37 +94,21 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
 
   console.log('---');
 
-  if (reinitializersSigner) {
-    const metadataRunner = (metadata as BaseContract).connect(reinitializersSigner) as MetadataBaseContract;
+  if (operatorSigner) {
+    const neuRunner = neu.connect(operatorSigner) as NeuBaseContract;
 
-    await (await metadataRunner.initializeV3()).wait();
-    console.log('Reinitialized Metadata V3: No refundable tokens remaining');
-
-    const neuRunner = neu.connect(reinitializersSigner) as NeuBaseContract;
-
-    await (await neuRunner.initializeV2(lockAddress as `0x${string}`)).wait();
-    console.log('Reinitialized Neu V2: DAO Lock contract set on NEU token');
-
-    await (await neuRunner.initializeV3(
-      operatorAddress as `0x${string}`,
-      metadataAddress as `0x${string}`,
-      lockAddress as `0x${string}`,
-      traitMetadataUri
-    )).wait();
-    console.log('Reinitialized Neu V3: Royalty receiver, Metadata contract, Lock address, and Trait Metadata URI set on NEU token');
-
-    const storageRunner = storage.connect(reinitializersSigner) as StorageBaseContract;
-
-    await (await storageRunner.initializeV2(entitlementAddress as `0x${string}`)).wait();
-    console.log('Reinitialized Storage V2: Entitlement contract set on Storage');
-
-    const entitlementRunner = entitlement.connect(reinitializersSigner) as EntitlementBaseContract;
-
-    await (await entitlementRunner.initializeV2()).wait();
-    console.log('Reinitialized Entitlement V2: NEU contract set on Entitlement');
-
+    await (await neuRunner.setMetadataContract(metadataAddress as `0x${string}`)).wait();
+    console.log('Metadata contract set on NEU token');
+    await (await neuRunner.setDaoLockContract(lockAddress as `0x${string}`)).wait();
+    console.log('DAO Lock contract set on NEU token');
+    await (await neuRunner.setStorageContract(storageAddress as `0x${string}`)).wait();
+    console.log('Storage contract set on NEU token');
+    await (await neuRunner.setTraitMetadataURI(traitMetadataUri)).wait();
+    console.log('Trait metadata URI set on NEU token');
   } else {
-    console.log('IMPORTANT: Run reinitializers for Entitlement V2; Storage V2; Metadata V3; and Neu V2 and V3 now!');
+    console.log('IMPORTANT: Update contract addresses in lib/config.ts now!');
+    console.log('Then, generate transactions for the NEU contract by calling deploy-contracts-tx.ts with the appropriate STEP env variable: 1, 2 and 3, like so:');
+    console.log('STEP=1 npx hardhat run scripts/deploy-contracts-tx.ts --network <network>');
   }
 
   console.log('---');

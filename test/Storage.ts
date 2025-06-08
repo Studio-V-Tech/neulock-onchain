@@ -2,7 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 
 import { userDataBytesArray, userDataHexArray } from "../scripts/lib/utils";
-import { deployContractsFixture, purchasedTokensFixture, setUserDataFixture } from "./lib/fixtures";
+import { deployContractsFixture, entitlementFixture, purchasedTokensFixture, setUserDataFixture, unlockFixture } from "./lib/fixtures";
 import { accessControlTestFactory, AccessControlSupportedContracts } from "./lib/AccessControl";
 
 describe("Storage", function () {
@@ -44,10 +44,36 @@ describe("Storage", function () {
       expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
     });
 
+    it("Updates data correctly with NEU entitlement", async function () {
+      const { callStorageAs, user, neu } = await loadFixture(setUserDataFixture);
+
+      await expect(callStorageAs(user).saveDataV3(await neu.getAddress() as `0x${string}`, userDataBytesArray[5])).not.to.be.reverted;
+      expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+    });
+
+    it("Updates data correctly with other entitlement", async function () {
+      const { callStorageAs, user, unlockLock } = await loadFixture(entitlementFixture);
+
+      await expect(callStorageAs(user).saveDataV3(await unlockLock.getAddress() as `0x${string}`, userDataBytesArray[5])).not.to.be.reverted;
+      expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[5]);
+    });
+
     it("Reverts on saving data if caller does not have entitlement", async function () {
       const { callStorageAs, user } = await loadFixture(deployContractsFixture);
 
       await expect(callStorageAs(user).saveData(0n, userDataBytesArray[0])).to.be.revertedWith("Caller does not have entitlement");
+    });
+
+    it("Reverts on saving data if caller does not have entitlement with provided contract", async function () {
+      const { callStorageAs, user2, unlockLock } = await loadFixture(entitlementFixture);
+
+      await expect(callStorageAs(user2).saveDataV3(await unlockLock.getAddress() as `0x${string}`, userDataBytesArray[5])).to.be.revertedWith("Caller does not have entitlement");
+    });
+
+    it("Reverts on saving data if caller passes invalid entitlement contract", async function () {
+      const { callStorageAs, user, metadata } = await loadFixture(deployContractsFixture);
+
+      await expect(callStorageAs(user).saveDataV3(await metadata.getAddress() as `0x${string}`, userDataBytesArray[0])).to.be.revertedWith("Caller does not have entitlement");
     });
 
     it("Updates data if caller does not own called NEU but has entitlement", async function () {
@@ -57,10 +83,16 @@ describe("Storage", function () {
       expect(await callStorageAs(user).retrieveData(user.address as `0x${string}`)).to.equal(userDataHexArray[0]);
     });
 
-    it("Reverts if caller does not own called NEU, has entitlement, but sends ether", async function () {
+    it("Updates data if caller does not own called NEU, sends ether, but has entitlement", async function () {
       const { callStorageAs, user } = await loadFixture(purchasedTokensFixture);
 
-      await expect(callStorageAs(user).saveData(2n, userDataBytesArray[0], { value: (10n ** 14n)})).to.be.revertedWith("Cannot add points to unowned NEU");
+      await expect(callStorageAs(user).saveData(2n, userDataBytesArray[0], { value: (10n ** 14n)})).not.to.be.reverted;
+    });
+
+    it("Reverts if caller has entitlement, sends ether, but inputs inexistent token", async function () {
+      const { callStorageAs, user } = await loadFixture(purchasedTokensFixture);
+
+      await expect(callStorageAs(user).saveData(42n, userDataBytesArray[0], { value: (10n ** 14n)})).to.be.reverted;
     });
 
     it("Reverts on saving data if caller does not own called NEU and does not have entitlement", async function () {
