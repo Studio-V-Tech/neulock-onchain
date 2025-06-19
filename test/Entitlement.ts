@@ -25,12 +25,17 @@ describe("Entitlement", function () {
     });
 
     it("Adds entitlement contract", async function () {
-      const { operator, callEntitlementAs, unlockLock } = await loadFixture(unlockFixture);
+      const { user, operator, callEntitlementAs, unlockLock } = await loadFixture(unlockFixture);
 
       const lockAddress = await unlockLock.getAddress() as `0x${string}`;
+
+      expect(await callEntitlementAs(user).entitlementContractsLength()).to.equal(1n);
+
       await expect(callEntitlementAs(operator).addEntitlementContract(lockAddress)).not.to.be.reverted;
 
-      const secondContract = await callEntitlementAs(operator).entitlementContractsV2(1n);
+      expect(await callEntitlementAs(user).entitlementContractsLength()).to.equal(2n);
+
+      const secondContract = await callEntitlementAs(user).entitlementContractsV2(1n);
 
       expect(secondContract).to.equal(lockAddress);
     });
@@ -76,17 +81,21 @@ describe("Entitlement", function () {
     });
 
     it("Removes additional entitlement contract", async function () {
-      const { operator, callEntitlementAs, neu, unlockLock } = await loadFixture(entitlementFixture);
+      const { user, operator, callEntitlementAs, neu, unlockLock } = await loadFixture(entitlementFixture);
 
       const lockAddress = await unlockLock.getAddress() as `0x${string}`;
       const neuAddress = await neu.getAddress() as `0x${string}`;
 
+      expect(await callEntitlementAs(user).entitlementContractsLength()).to.equal(2n);
+
       await expect(callEntitlementAs(operator).removeEntitlementContract(lockAddress)).not.to.be.reverted;
 
-      const firstContract = await callEntitlementAs(operator).entitlementContractsV2(0n);
+      expect(await callEntitlementAs(user).entitlementContractsLength()).to.equal(1n);
+
+      const firstContract = await callEntitlementAs(user).entitlementContractsV2(0n);
 
       expect(firstContract).to.equal(neuAddress);
-      await expect(callEntitlementAs(operator).entitlementContractsV2(1n)).to.be.reverted;
+      await expect(callEntitlementAs(user).entitlementContractsV2(1n)).to.be.reverted;
     });
   });
 
@@ -267,6 +276,18 @@ describe("Entitlement", function () {
 
       const hasEntitlementAfterASecond = await callEntitlementAs(user).hasEntitlement(user.address as `0x${string}`);
       expect(hasEntitlementAfterASecond).to.be.true;
+    });
+  });
+
+  describe("Entitlement contract listing", function () {
+    it("Lists entitlement contracts", async function () {
+      const { user, callEntitlementAs } = await loadFixture(entitlementFixture);
+
+      expect(await callEntitlementAs(user).entitlementContractsLength()).to.equal(2n);
+      expect(await callEntitlementAs(user).entitlementContractsV2(0n)).not.to.be.reverted;
+      expect(await callEntitlementAs(user).entitlementContractsV2(1n)).not.to.be.reverted;
+
+      await expect(callEntitlementAs(user).entitlementContractsV2(2n)).to.be.revertedWithPanic();
     });
   });
 

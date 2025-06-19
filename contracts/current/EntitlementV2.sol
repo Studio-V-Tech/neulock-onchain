@@ -103,6 +103,15 @@ contract NeuEntitlementV2 is
     }
 
     /**
+     * @notice Returns the number of entitlement contracts.
+     * @dev Includes the NeuTokenV3 contract.
+     * @return The number of entitlement contracts.
+     */
+    function entitlementContractsLength() external view returns (uint256) {
+        return _entitlementContracts.length() + 1;
+    }
+
+    /**
      * @notice Adds a new entitlement contract.
      * @dev Only callable by addresses with OPERATOR_ROLE. The contract must implement balanceOf().
      * @param entitlementContract The address of the entitlement contract to add.
@@ -154,9 +163,9 @@ contract NeuEntitlementV2 is
             return true;
         }
 
-        uint256 entitlementContractsLength = _entitlementContracts.length();
+        uint256 contractsLength = _entitlementContracts.length();
 
-        for (uint256 i = 0; i < entitlementContractsLength; i++) {
+        for (uint256 i = 0; i < contractsLength; i++) {
             if (_callerHasContractEntitlement(user, _entitlementContracts.at(i))) {
                 return true;
             }
@@ -191,9 +200,9 @@ contract NeuEntitlementV2 is
      * @return An array of addresses of entitlement contracts where the user has entitlement.
      */
     function userEntitlementContracts(address user) external view override returns (address[] memory) {
-        uint256 entitlementContractsLength = _entitlementContracts.length();
+        uint256 contractsLength = _entitlementContracts.length();
 
-        address[] memory userEntitlements = new address[](entitlementContractsLength + 1);
+        address[] memory userEntitlements = new address[](contractsLength + 1);
         uint256 count = 0;
 
         if (_callerHasNeuEntitlement(user)) {
@@ -201,7 +210,7 @@ contract NeuEntitlementV2 is
             count++;
         }
 
-        for (uint256 i = 0; i < entitlementContractsLength; i++) {
+        for (uint256 i = 0; i < contractsLength; i++) {
             address entitlementContract = _entitlementContracts.at(i);
 
             if (_callerHasContractEntitlement(user, entitlementContract)) {
