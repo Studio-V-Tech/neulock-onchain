@@ -124,7 +124,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
 
     const entitlementRunner = entitlement.connect(reinitializersSigner) as EntitlementBaseContract;
 
-    await (await entitlementRunner.initializeV2()).wait();
+    await (await entitlementRunner.initializeV2(neuAddress as `0x${string}`)).wait();
     console.log('Reinitialized Entitlement V2: NEU contract set on Entitlement');
 
   } else {

@@ -5,7 +5,7 @@ interface INeuEntitlementV2 {
     event InitializedEntitlement(uint256 version, address defaultAdmin, address upgrader, address operator, address neuContract);
     event EntitlementContractAdded(address indexed entitlementContract);
     event EntitlementContractRemoved(address indexed entitlementContract);
-    event InitializedEntitlementV2();
+    event InitializedEntitlementV2(address neuContract);
 
     function addEntitlementContract(address entitlementContract) external;
     function removeEntitlementContract(address entitlementContract) external;

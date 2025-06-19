@@ -266,7 +266,9 @@ export async function upgradeToV3Fixture() {
   const entitlementV2 = await upgrades.upgradeProxy(entitlementAddress, EntitlementV2, {
     call: {
       fn: 'initializeV2',
-      args: [],
+      args: [
+        neuAddress as `0x${string}`,
+      ],
     },
   });
 

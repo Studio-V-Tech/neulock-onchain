@@ -72,20 +72,23 @@ contract NeuEntitlementV2 is
     }
 
     /**
-     * @notice Upgrades contract state to V2, migrating entitlement contracts to the new storage structure.
+     * @notice Upgrades contract state to V2, migrating entitlement contracts to the new storage structure and setting the NEU contract.
      * @dev Only callable by addresses with UPGRADER_ROLE. Should be called after upgrading to V2.
+     * @param neuContract The address of the NeuTokenV3 contract.
      *
      * Emits {InitializedEntitlementV2} event.
      */
-    function initializeV2() public reinitializer(2) onlyRole(UPGRADER_ROLE) {
-        _neuContract = INeuTokenV3(entitlementContracts[0]);
+    function initializeV2(address neuContract) public reinitializer(2) onlyRole(UPGRADER_ROLE) {
+        _neuContract = INeuTokenV3(neuContract);
 
-        for (uint256 i = 1; i < entitlementContracts.length; i++) {
-            // slither-disable-next-line unused-return (we only care about the side effect)
-            _entitlementContracts.add(entitlementContracts[i]);
+        for (uint256 i = 0; i < entitlementContracts.length; i++) {
+            if (entitlementContracts[i] != neuContract) {
+                // slither-disable-next-line unused-return (we only care about the side effect)
+                _entitlementContracts.add(entitlementContracts[i]);
+            }
         }
 
-        emit InitializedEntitlementV2();
+        emit InitializedEntitlementV2(neuContract);
     }
 
     /**
