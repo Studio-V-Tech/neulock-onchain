@@ -79,9 +79,11 @@ contract NeuEntitlementV2 is
      * Emits {InitializedEntitlementV2} event.
      */
     function initializeV2(address neuContract) public reinitializer(2) onlyRole(UPGRADER_ROLE) {
+        uint256 existingContractsLength = entitlementContracts.length;
+
         _neuContract = INeuTokenV3(neuContract);
 
-        for (uint256 i = 0; i < entitlementContracts.length; i++) {
+        for (uint256 i = 0; i < existingContractsLength; i++) {
             if (entitlementContracts[i] != neuContract) {
                 // slither-disable-next-line unused-return (we only care about the side effect)
                 _entitlementContracts.add(entitlementContracts[i]);
