@@ -13,4 +13,5 @@ interface INeuEntitlementV2 {
     function hasEntitlementWithContract(address user, address entitlementContract) external view returns (bool);
     function userEntitlementContracts(address user) external view returns (address[] memory);
     function entitlementContractsV2(uint index) external view returns (address);
+    function entitlementContractsLength() external view returns (uint256);
 }
