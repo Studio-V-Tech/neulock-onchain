@@ -20,6 +20,7 @@ export async function generateTx({ contract, functionName, funcArgs, value, cont
   const ContractFactory = (await ethers.getContractFactory(contract))
     .connect(new ethers.VoidSigner(operator, ethers.provider));
 
+  // @ts-expect-error We're indexing with 2 enums
   const contractAddress = contractAddressOverride || ChainContractAddress[chain][contract];
   const ethersContract = ContractFactory.attach(contractAddress);
   

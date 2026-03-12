@@ -27,6 +27,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   const Logo = await ethers.getContractFactory("NeuLogoV2");
   const Entitlement = await ethers.getContractFactory("NeuEntitlementV2");
   const Lock = await ethers.getContractFactory("NeuDaoLockV2");
+  const Managed = await ethers.getContractFactory("NeuManagedAccountsV1");
 
   const operatorSigner = forceOperations || chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
   const reinitializersSigner = forceReinitializers || chainType === ChainType.local ? await ethers.getSigner(upgraderAddress) : null;
@@ -36,7 +37,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   const logo = await Logo.deploy();
   await logo.waitForDeployment();
   const logoAddress = await logo.getAddress();
-  console.log(`Neulock Logo deployed at:        ${logoAddress}`);
+  console.log(`Neulock Logo deployed at:           ${logoAddress}`);
 
   const neu = await upgrades.deployProxy(Neu, [
     adminAddress,
@@ -47,7 +48,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   await neu.waitForDeployment();
 
   const neuAddress = await neu.getAddress();
-  console.log(`NEU token deployed at:           ${neuAddress}`);
+  console.log(`NEU token deployed at:              ${neuAddress}`);
 
   const entitlement = await upgrades.deployProxy(Entitlement, [
     adminAddress,
@@ -59,7 +60,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   await entitlement.waitForDeployment();
 
   const entitlementAddress = await entitlement.getAddress();
-  console.log(`Neulock Entitlement deployed at: ${entitlementAddress}`);
+  console.log(`Neulock Entitlement deployed at:    ${entitlementAddress}`);
 
   const lock = await Lock.deploy(
     adminAddress,
@@ -70,7 +71,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   await lock.waitForDeployment();
 
   const lockAddress = await lock.getAddress();
-  console.log(`Neulock DAO Lock deployed at:    ${lockAddress}`);
+  console.log(`Neulock DAO Lock deployed at:       ${lockAddress}`);
 
   const storage = await upgrades.deployProxy(Storage, [
     adminAddress,
@@ -81,7 +82,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   await storage.waitForDeployment();
 
   const storageAddress = await storage.getAddress();
-  console.log(`Neulock Storage deployed at:     ${storageAddress}`);
+  console.log(`Neulock Storage deployed at:        ${storageAddress}`);
 
   const metadata = await upgrades.deployProxy(Metadata, [
     adminAddress,
@@ -94,7 +95,25 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   await metadata.waitForDeployment();
 
   const metadataAddress = await metadata.getAddress();
-  console.log(`Neulock Metadata deployed at:    ${metadataAddress}`);
+  console.log(`Neulock Metadata deployed at:       ${metadataAddress}`);
+
+  const managedUnifyid = await Managed.deploy(
+    operatorAddress,
+  );
+
+  await managedUnifyid.waitForDeployment();
+
+  const managedUnifyidAddress = await managedUnifyid.getAddress();
+  console.log(`Neulock ManagedUnifyid deployed at: ${managedUnifyidAddress}`);
+
+  const managedKinde = await Managed.deploy(
+    operatorAddress,
+  );
+
+  await managedKinde.waitForDeployment();
+
+  const managedKindeAddress = await managedKinde.getAddress();
+  console.log(`Neulock ManagedKinde deployed at:   ${managedKindeAddress}`);
 
   console.log('---');
 
@@ -129,6 +148,16 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
 
   } else {
     console.log('IMPORTANT: Run reinitializers for Entitlement V2; Storage V2; Metadata V3; and Neu V2 and V3 now!');
+  }
+
+  if (operatorSigner) {
+    const entitlementRunner = entitlement.connect(operatorSigner) as EntitlementBaseContract;
+
+    await (await entitlementRunner.addEntitlementContract(managedUnifyidAddress as `0x${string}`)).wait();
+    console.log('Added Managed UnifyID as an entitlement contract');
+
+    await (await entitlementRunner.addEntitlementContract(managedKindeAddress as `0x${string}`)).wait();
+    console.log('Added Managed Kinde as an entitlement contract');
   }
 
   console.log('---');

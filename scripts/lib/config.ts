@@ -11,12 +11,18 @@ export enum Chain {
 }
 
 export enum Contract {
-  neu = 'Neu',
-  storage = 'NeuStorage',
-  metadata = 'NeuMetadata',
-  logo = 'NeuLogo',
-  entitlement = 'NeuEntitlement',
-  lock = 'NeuDaoLock',
+  neu = 'NeuV3',
+  storage = 'NeuStorageV3',
+  metadata = 'NeuMetadataV3',
+  logo = 'NeuLogoV2',
+  entitlement = 'NeuEntitlementV2',
+  lock = 'NeuDaoLockV2',
+  managed = 'NeuManagedAccountsV1',
+}
+
+export enum ManagedContractDeployment {
+  unifyid = 'unifyid',
+  kinde = 'kinde',
 }
 
 export enum ChainType {
@@ -39,6 +45,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0x0',
     [Contract.entitlement]: '0x0',
     [Contract.lock]: '0x0',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.sepolia]: {
     [Contract.neu]: '0x51b063969a9b3E2C8e462BB0De6b7E742dd0d09F',
@@ -47,6 +55,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0x0',
     [Contract.entitlement]: '0x0',
     [Contract.lock]: '0x0',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.optimism]: {
     [Contract.neu]: '0x8D086dd57475D4490190fB15a19aAEc8167F89dD',
@@ -55,6 +65,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0x84DDa85AEed3E7EEC2AC5541626e1d717B5DBdA0',
     [Contract.entitlement]: '0x844Ab2249724fbcda0e85e3559606e95664829B0',
     [Contract.lock]: '0x05F1F98F2F5C2B679F8BC564925E5A1255845240',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.optimismSepolia]: {
     [Contract.neu]: '0x60C16340c8be2635642A1f9387a3918E3196FdED',
@@ -63,6 +75,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0xc34D36ED7785cED5B72289ac96f86aD40FF8a2bc',
     [Contract.entitlement]: '0xd44C62300124D5540812f37CA62F372600b6F2A2',
     [Contract.lock]: '0xF17Ec62856f4516d72492010A168F6F40BD28e26',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.arbitrumOne]: {
     [Contract.neu]: '0xf06A890a2Fdb0d21413FDc3488B7298552A9C0C9',
@@ -71,6 +85,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0x10d1767aB87e600c6a4085E65e1F078aeE94f7aD',
     [Contract.entitlement]: '0xBDe5b957856B6c13718101a2b744Ce8b8aF248c0',
     [Contract.lock]: '0x8f95a48AbD743FEeDfe0AD34028adbfE9C9E5D29',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.arbitrumSepolia]: {
     [Contract.neu]: '0xbE2b0561145d55FfCf9867A3974C1f968845e557',
@@ -79,6 +95,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0x4599Be512A45c7F6D849887aD1f94E83fD6B4d45',
     [Contract.entitlement]: '0x2861E46f87BF4C2c1F09866ED343BA6Fa6FB3C30',
     [Contract.lock]: '0x4f64BC2009B81AC8153F95B1c4ad469B56bFb221',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.base]: {
     [Contract.neu]: '0xd0E66B652213fcbdCE609142B33498b7dcf05B50',
@@ -87,6 +105,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0x91e173bF8051A945097348E57094Db7181495078',
     [Contract.entitlement]: '0xB12A93858f84fd5908169EC6131DBE0aa838733c',
     [Contract.lock]: '0x3416349d41BE951C7Ad3Feb75f0e2E93853f69f4',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.baseSepolia]: {
     [Contract.neu]: '0x60C16340c8be2635642A1f9387a3918E3196FdED',
@@ -95,6 +115,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0xA0fF27791E8cf3aBA3c93F210C9e0d0CA1159e0a',
     [Contract.entitlement]: '0xF17Ec62856f4516d72492010A168F6F40BD28e26',
     [Contract.lock]: '0xa69e94763138cE2A041a0132fc0356EE857C47f2',
+    [ManagedContractDeployment.unifyid]: '0x0',
+    [ManagedContractDeployment.kinde]: '0x0',
   },
   [Chain.hardhat]: {
     [Contract.neu]: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
@@ -103,6 +125,8 @@ export const ChainContractAddress = {
     [Contract.logo]: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     [Contract.entitlement]: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
     [Contract.lock]: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707',
+    [ManagedContractDeployment.unifyid]: '0x610178dA211FEF7D417bC0e6FeD39F05609AD788',
+    [ManagedContractDeployment.kinde]: '0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e',
   },
 };
 
