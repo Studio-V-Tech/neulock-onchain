@@ -25,7 +25,7 @@ async function main() {
   } catch (error) {}
 
   await generateTx({
-    contract: Contract.neu,
+    contract: "NeuV3" satisfies Contract,
     functionName: 'safeMint',
     funcArgs: [process.env.TO!, BigInt(seriesIndex)],
     count,

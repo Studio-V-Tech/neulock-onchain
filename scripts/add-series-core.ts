@@ -1,13 +1,13 @@
 import { ethers } from "hardhat";
 import MetadataBaseContract from "./interfaces/metadata.model";
 import { getChain, getChainType, stringToBytes } from "./lib/utils";
-import { Account, ChainTypeAccount, ChainContractAddress, Contract } from "./lib/config";
+import { ChainContractAddress, ChainTypeAccount } from "./lib/config";
 
 export default async function addSeries() {
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
-  const metadataAddress = ChainContractAddress[chain][Contract.metadata];
-  const operatorAddress = ChainTypeAccount[chainType][Account.operator];
+  const metadataAddress = ChainContractAddress[chain]["NeuMetadataV3"];
+  const operatorAddress = ChainTypeAccount[chainType].operator;
 
   const Metadata = await ethers.getContractFactory("NeuMetadataV2");
   const metadata = Metadata.attach(metadataAddress);

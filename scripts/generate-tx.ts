@@ -1,9 +1,20 @@
 import { generateTx } from './generate-tx-core';
-import { Contract } from './lib/config';
+import { ContractDeployment } from './lib/config';
+
+const contracts: ContractDeployment[] = [
+  "NeuV3",
+  "NeuStorageV3",
+  "NeuMetadataV3",
+  "NeuLogoV2",
+  "NeuEntitlementV2",
+  "NeuDaoLockV2",
+  "unifyid",
+  "kinde",
+];
 
 async function main() {
-  if (!process.env.CONTRACT || !(<any>Object).values(Contract).includes(process.env.CONTRACT)) {
-    console.error('ERROR: Set env variable CONTRACT to one of the following: ', (<any>Object).values(Contract).join(', '));
+  if (!process.env.CONTRACT || !contracts.includes(process.env.CONTRACT as ContractDeployment)) {
+    console.error('ERROR: Set env variable CONTRACT to one of the following: ', contracts.join(', '));
     process.exit(1);
   }
 
@@ -39,15 +50,15 @@ async function main() {
 
   const contractAddressOverride = process.env.CONTRACT_ADDRESS || null;
 
-  const contractName = process.env.CONTRACT!
+  const contractName = process.env.CONTRACT! as ContractDeployment;
 
   await generateTx({
-    contract: contractName as Contract,
+    contract: contractName,
     functionName,
     funcArgs,
     value,
     contractAddressOverride,
-});
+  });
 }
 
 main().catch((error) => {

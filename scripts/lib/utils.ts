@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { randomBytesSeed } from '@csquare/random-bytes-seed';
 import { HardhatEthersProvider } from "@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider";
-import { Chain, ChainType } from "./config";
+import { Chain, ChainType, mainnetChains, testnetChains } from "./config";
 
 export interface TokenMetadata {
   description: string;
@@ -94,19 +94,8 @@ export async function getChain(provider: HardhatEthersProvider): Promise<Chain> 
 }
 
 export async function getChainType(chain: Chain): Promise<ChainType> {
-  const isMainnet = [
-    Chain.ethereum,
-    Chain.arbitrumOne,
-    Chain.base,
-    Chain.optimism,
-  ].includes(chain);
+  const isMainnet = mainnetChains.includes(chain);
+  const isTestnet = testnetChains.includes(chain);
 
-  const isTestnet = [
-    Chain.sepolia,
-    Chain.arbitrumSepolia,
-    Chain.baseSepolia,
-    Chain.optimismSepolia,
-  ].includes(chain);
-
-  return isMainnet ? ChainType.mainnet : isTestnet ? ChainType.testnet : ChainType.local;
+  return isMainnet ? "mainnet" : isTestnet ? "testnet" : "local";
 }

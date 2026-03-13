@@ -39,7 +39,7 @@ async function main() {
   }
 
   await generateTx({
-    contract: Contract.metadata,
+    contract: "NeuMetadataV3" satisfies Contract,
     functionName: 'addSeries',
     funcArgs: series[seriesIndex],
   });

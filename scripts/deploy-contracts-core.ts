@@ -1,7 +1,7 @@
 import { ethers, upgrades } from "hardhat";
 import { BaseContract } from "ethers";
 import traitMetadataUri from "./trait-metadata-uri";
-import { Account, ChainType, ChainTypeAccount } from "./lib/config";
+import { ChainTypeAccount } from "./lib/config";
 import { getChain, getChainType } from "./lib/utils";
 import NeuBaseContract from "./interfaces/neu.model";
 import StorageBaseContract from "./interfaces/storage.model";
@@ -17,9 +17,9 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
 
-  const adminAddress = ChainTypeAccount[chainType][Account.admin];
-  const upgraderAddress = ChainTypeAccount[chainType][Account.upgrader];
-  const operatorAddress = ChainTypeAccount[chainType][Account.operator];
+  const adminAddress = ChainTypeAccount[chainType].admin;
+  const upgraderAddress = ChainTypeAccount[chainType].upgrader;
+  const operatorAddress = ChainTypeAccount[chainType].operator;
 
   const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV3" : "NeuV3");
   const Metadata = await ethers.getContractFactory("NeuMetadataV3");
@@ -29,8 +29,8 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   const Lock = await ethers.getContractFactory("NeuDaoLockV2");
   const Managed = await ethers.getContractFactory("NeuManagedAccountsV1");
 
-  const operatorSigner = forceOperations || chainType === ChainType.local ? await ethers.getSigner(operatorAddress) : null;
-  const reinitializersSigner = forceReinitializers || chainType === ChainType.local ? await ethers.getSigner(upgraderAddress) : null;
+  const operatorSigner = forceOperations || chainType === "local" ? await ethers.getSigner(operatorAddress) : null;
+  const reinitializersSigner = forceReinitializers || chainType === "local" ? await ethers.getSigner(upgraderAddress) : null;
 
   console.log('---');
 

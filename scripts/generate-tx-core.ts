@@ -1,9 +1,9 @@
 import { ethers } from 'hardhat';
-import { Account, Contract, ChainContractAddress, ChainTypeAccount } from './lib/config';
+import { ChainContractAddress, ChainTypeAccount, ContractDeployment } from './lib/config';
 import { getChain, getChainType } from './lib/utils';
 
 export async function generateTx({ contract, functionName, funcArgs, value, contractAddressOverride, count = 1 }: {
-  contract: Contract,
+  contract: ContractDeployment,
   functionName: string,
   funcArgs: any[],
   value?: bigint | null,
@@ -15,12 +15,11 @@ export async function generateTx({ contract, functionName, funcArgs, value, cont
 
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
-  const operator = ChainTypeAccount[chainType][Account.operator];
+  const operator = ChainTypeAccount[chainType].operator;
 
   const ContractFactory = (await ethers.getContractFactory(contract))
     .connect(new ethers.VoidSigner(operator, ethers.provider));
 
-  // @ts-expect-error We're indexing with 2 enums
   const contractAddress = contractAddressOverride || ChainContractAddress[chain][contract];
   const ethersContract = ContractFactory.attach(contractAddress);
   

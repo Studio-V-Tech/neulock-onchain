@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 import { generateTx } from "./generate-tx-core";
-import { Contract, Chain, ChainContractAddress } from "./lib/config";
+import { Chain, ChainContractAddress, Contract } from "./lib/config";
 import traitMetadataUri from './trait-metadata-uri';
 
 async function main() {
@@ -25,27 +25,27 @@ async function main() {
 
 async function setMetadataContract(chain: Chain) {
   await generateTx({
-    contract: Contract.neu,
+    contract: "NeuV3" satisfies Contract,
     functionName: 'setMetadataContract',
     funcArgs: [
-      ChainContractAddress[chain][Contract.metadata],
+      ChainContractAddress[chain]["NeuMetadataV3"],
     ],
   });
 }
 
 async function setStorageContract(chain: Chain) {
   await generateTx({
-    contract: Contract.neu,
+    contract: "NeuV3" satisfies Contract,
     functionName: 'setStorageContract',
     funcArgs: [
-      ChainContractAddress[chain][Contract.storage],
+      ChainContractAddress[chain]["NeuStorageV3"],
     ],
   });
 }
 
 async function setTraitMetadataURI(chain: Chain) {
   await generateTx({
-    contract: Contract.neu,
+    contract: "NeuV3" satisfies Contract,
     functionName: 'setTraitMetadataURI',
     funcArgs: [
       traitMetadataUri,
