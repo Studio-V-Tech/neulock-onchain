@@ -13,13 +13,14 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   forceOperations?: boolean,
   forceReinitializers?: boolean,
 } = {}
-): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
+): Promise<[BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract, BaseContract]> {
   const chain = await getChain(ethers.provider);
   const chainType = await getChainType(chain);
 
   const adminAddress = ChainTypeAccount[chainType].admin;
   const upgraderAddress = ChainTypeAccount[chainType].upgrader;
   const operatorAddress = ChainTypeAccount[chainType].operator;
+  const sponsorAddress = ChainTypeAccount[chainType].sponsor;
 
   const Neu = await ethers.getContractFactory(isTest ? "NeuHarnessV3" : "NeuV3");
   const Metadata = await ethers.getContractFactory("NeuMetadataV3");
@@ -98,7 +99,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   console.log(`Neulock Metadata deployed at:       ${metadataAddress}`);
 
   const managedUnifyid = await Managed.deploy(
-    operatorAddress,
+    sponsorAddress,
   );
 
   await managedUnifyid.waitForDeployment();
@@ -107,7 +108,7 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
   console.log(`Neulock ManagedUnifyid deployed at: ${managedUnifyidAddress}`);
 
   const managedKinde = await Managed.deploy(
-    operatorAddress,
+    sponsorAddress,
   );
 
   await managedKinde.waitForDeployment();
@@ -169,6 +170,8 @@ async function deployContracts({ isTest, forceOperations, forceReinitializers } 
     logo,
     entitlement,
     lock,
+    managedUnifyid,
+    managedKinde,
   ];
 }
 

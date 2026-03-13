@@ -17,8 +17,14 @@ async function main() {
     case '3':
       await setTraitMetadataURI(chain);
       break;
+    case '4':
+      await addUnifyidManagedContract(chain);
+      break;
+    case '5':
+      await addKindeManagedContract(chain);
+      break;
     default:
-      console.error('ERROR: Set env variable STEP to one of the following: 1, 2, 3');
+      console.error('ERROR: Set env variable STEP to one of the following: 1, 2, 3, 4, 5');
       process.exit(1);
   }
 }
@@ -49,6 +55,26 @@ async function setTraitMetadataURI(chain: Chain) {
     functionName: 'setTraitMetadataURI',
     funcArgs: [
       traitMetadataUri,
+    ],
+  });
+}
+
+async function addUnifyidManagedContract(chain: Chain) {
+  await generateTx({
+    contract: "NeuEntitlementV2" satisfies Contract,
+    functionName: 'addEntitlementContract',
+    funcArgs: [
+      ChainContractAddress[chain]["unifyid"],
+    ],
+  });
+}
+
+async function addKindeManagedContract(chain: Chain) {
+  await generateTx({
+    contract: "NeuEntitlementV2" satisfies Contract,
+    functionName: 'addEntitlementContract',
+    funcArgs: [
+      ChainContractAddress[chain]["kinde"],
     ],
   });
 }

@@ -18,6 +18,14 @@ STEP=3 npx hardhat run scripts/deploy-contracts-tx.ts --network optimism
 echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
 TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
 
+STEP=4 npx hardhat run scripts/deploy-contracts-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
+STEP=5 npx hardhat run scripts/deploy-contracts-tx.ts --network optimism
+echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
+TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism
+
 SERIES=0 npx hardhat run scripts/add-series-tx.ts --network optimism
 echo 0x > /Volumes/NO\ NAME/unsigned-tx.txt
 TX=$(cat /Volumes/NO\ NAME/signed-tx.txt) npx hardhat run scripts/send-tx.ts --network optimism

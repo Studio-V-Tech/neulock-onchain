@@ -36,7 +36,8 @@ export type ChainType =
 export type Account =
   'admin' |
   'operator' |
-  'upgrader';
+  'upgrader' |
+  'sponsor';
 
 export const ChainContractAddress: Record<Chain, Record<ContractDeployment, `0x${string}`>> = {
   [Chain.ethereum]: {
@@ -76,8 +77,8 @@ export const ChainContractAddress: Record<Chain, Record<ContractDeployment, `0x$
     ['NeuLogoV2']: '0xc34D36ED7785cED5B72289ac96f86aD40FF8a2bc',
     ['NeuEntitlementV2']: '0xd44C62300124D5540812f37CA62F372600b6F2A2',
     ['NeuDaoLockV2']: '0xF17Ec62856f4516d72492010A168F6F40BD28e26',
-    ['unifyid']: '0x0',
-    ['kinde']: '0x0',
+    ['unifyid']: '0x3DA047988020F71DA83aF0C5976a7E2ff53F95af',
+    ['kinde']: '0x8d6d41ee5738B10da2A883ff56EfD107C365eA72',
   },
   [Chain.arbitrumOne]: {
     ['NeuV3']: '0xf06A890a2Fdb0d21413FDc3488B7298552A9C0C9',
@@ -136,16 +137,19 @@ export const ChainTypeAccount: Record<ChainType, Record<Account, `0x${string}`>>
     ['admin']: '0xf5459166F571f5dccD3c644cfCFa2c67D4bb0183',
     ['upgrader']: '0x2204be085d0Ee7860B2f811e2BAc8b520cBb4Ee8',
     ['operator']: '0x65854547542db7a4F23bf4b248B50263A7ea4a4D',
+    ['sponsor']: '0xCa0aa7691BF697A8F2eCE516a77D0678150FB9a6',
   },
   ['testnet']: {
     ['admin']: '0x40DF403bE03cc2942e3C7FDE45F196772caF1130',
     ['upgrader']: '0x40DF403bE03cc2942e3C7FDE45F196772caF1130',
     ['operator']: '0x40DF403bE03cc2942e3C7FDE45F196772caF1130',
+    ['sponsor']: '0xCa0aa7691BF697A8F2eCE516a77D0678150FB9a6',
   },
   ['local']: {
     ['admin']: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
     ['upgrader']: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     ['operator']: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    ['sponsor']: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
   },
 };
 
